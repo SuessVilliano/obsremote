@@ -15,84 +15,78 @@
   <main class="app-shell">
     <header class="topbar">
       <div>
-        <p class="eyebrow">OBS REMOTE</p>
+        <p class="eyebrow">OBS REMOTE • V2</p>
         <h1>Command Center</h1>
-        <p class="memory-note">Remembers this device automatically.</p>
+        <p class="memory-note">Your tablet remembers this setup and reconnects automatically.</p>
       </div>
       <div id="statusPill" class="status-pill offline"><span></span><strong>Offline</strong></div>
     </header>
 
     <section id="loginCard" class="panel login-card hidden">
       <h2>Connect your controller</h2>
-      <p>Enter the remote PIN configured on the Mac running OBS. This device can remember it for next time.</p>
-      <label>
-        Remote PIN
-        <input id="pinInput" inputmode="numeric" autocomplete="off" placeholder="••••••" />
-      </label>
+      <p>Enter the remote PIN configured on the Mac running OBS.</p>
+      <label>Remote PIN<input id="pinInput" inputmode="numeric" autocomplete="off" placeholder="••••••" /></label>
       <label class="remember-row"><input id="rememberDevice" type="checkbox" checked /> Remember this tablet / phone</label>
       <button id="connectButton" class="primary large">Connect</button>
     </section>
 
     <section id="dashboard" class="hidden">
       <section class="panel toolbar">
-        <label class="target-select">
-          OBS Computer
-          <select id="targetSelect"></select>
-        </label>
+        <label class="target-select">OBS Computer<select id="targetSelect"></select></label>
         <button id="refreshButton" class="secondary">Refresh</button>
         <button id="forgetButton" class="secondary ghost">Forget device</button>
       </section>
 
       <section class="hero-grid">
-        <button id="streamButton" class="action-card stream">
-          <span class="action-label">STREAM</span>
-          <strong id="streamState">Start Stream</strong>
-        </button>
-        <button id="recordButton" class="action-card record">
-          <span class="action-label">RECORD</span>
-          <strong id="recordState">Start Recording</strong>
-        </button>
+        <button id="streamButton" class="action-card stream"><span class="action-label">STREAM</span><strong id="streamState">Start Stream</strong></button>
+        <button id="recordButton" class="action-card record"><span class="action-label">RECORD</span><strong id="recordState">Start Recording</strong></button>
       </section>
 
       <section class="panel smart-panel">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">SMART SETUP</p>
-            <h2>Build your streaming scenes</h2>
-          </div>
-          <span class="badge">ONE TAP</span>
+        <div class="section-heading"><div><p class="eyebrow">SHOW MODE</p><h2>One-tap streaming macros</h2></div><span class="badge">SMART</span></div>
+        <div class="macro-grid">
+          <button class="macro-card smart-action" data-preset="starting"><strong>⏳ Starting</strong><span>Lobby + mic muted</span></button>
+          <button class="macro-card smart-action hot" data-preset="game"><strong>🎮 Game</strong><span>Xbox + facecam + mic live</span></button>
+          <button class="macro-card smart-action" data-preset="xbox"><strong>🕹 Xbox Full</strong><span>Game fills the screen</span></button>
+          <button class="macro-card smart-action" data-preset="camera"><strong>🎥 Full Cam</strong><span>Camera focus + mic live</span></button>
+          <button class="macro-card smart-action" data-preset="chat"><strong>💬 Just Chatting</strong><span>Studio layout + camera</span></button>
+          <button class="macro-card smart-action warn" data-preset="brb"><strong>☕ BRB</strong><span>Break screen + mic muted</span></button>
+          <button class="macro-card smart-action" data-preset="ending"><strong>👋 Ending</strong><span>Outro + mic muted</span></button>
+          <button id="panicButton" class="macro-card danger"><strong>🔇 PANIC MUTE</strong><span>Mute every OBS audio source</span></button>
         </div>
-        <p class="panel-copy">Creates Starting Soon, Game + Facecam, Full Camera, BRB and Ending scenes, plus built-in animated browser backgrounds. It will also try to detect your webcam and Xbox/capture source automatically.</p>
-        <div class="template-grid">
-          <button id="buildScenesButton" class="template-card"><strong>Build Smart Scenes</strong><span>Set up the whole starter pack</span></button>
-          <button class="template-card quick-scene" data-scene="Starting Soon"><strong>Starting Soon</strong><span>Pre-stream lobby</span></button>
-          <button class="template-card quick-scene" data-scene="Game + Facecam"><strong>Game + Facecam</strong><span>Xbox + camera</span></button>
-          <button class="template-card quick-scene" data-scene="Full Camera"><strong>Full Camera</strong><span>Talking / reactions</span></button>
-          <button class="template-card quick-scene" data-scene="BRB"><strong>BRB</strong><span>Step away safely</span></button>
-          <button class="template-card quick-scene" data-scene="Ending"><strong>Ending</strong><span>Close the show</span></button>
+      </section>
+
+      <section class="panel smart-panel">
+        <div class="section-heading"><div><p class="eyebrow">SMART SETUP</p><h2>Build the whole scene pack</h2></div><span class="badge">ONE TAP</span></div>
+        <p class="panel-copy">Creates Starting Soon, Game + Facecam, Xbox Fullscreen, Full Camera, Just Chatting, BRB and Ending. It tries to detect your Logitech camera, Xbox/capture source and main mic automatically.</p>
+        <button id="buildScenesButton" class="primary large">Build / Repair Smart Scenes</button>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">BACKGROUNDS</p><h2>Drop a look into the current scene</h2></div></div>
+        <div class="background-grid">
+          <button class="background-card" data-page="studio.html"><strong>Studio</strong><span>Blue + purple creator room</span></button>
+          <button class="background-card" data-page="neon.html"><strong>Neon</strong><span>Cyber command center</span></button>
+          <button class="background-card" data-page="minimal.html"><strong>Minimal</strong><span>Clean premium office</span></button>
+          <button class="background-card" data-page="starting.html"><strong>Starting</strong><span>Animated pre-show look</span></button>
+          <button class="background-card" data-page="brb.html"><strong>BRB</strong><span>Animated break screen</span></button>
+          <button class="background-card" data-page="ending.html"><strong>Ending</strong><span>Animated outro</span></button>
         </div>
       </section>
 
       <section class="panel">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">SCENES</p>
-            <h2>Switch the show</h2>
-          </div>
-          <span id="sceneCount" class="counter">0</span>
-        </div>
+        <div class="section-heading"><div><p class="eyebrow">SCENES</p><h2>Switch the show</h2></div><span id="sceneCount" class="counter">0</span></div>
         <div id="sceneGrid" class="button-grid scenes"></div>
       </section>
 
       <section class="panel">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">AUDIO</p>
-            <h2>Mic & sound</h2>
-          </div>
-          <span id="audioCount" class="counter">0</span>
-        </div>
-        <div id="audioGrid" class="button-grid audio"></div>
+        <div class="section-heading"><div><p class="eyebrow">CURRENT SCENE</p><h2>Show / hide sources</h2></div><span id="sourceCount" class="counter">0</span></div>
+        <div id="sourceGrid" class="button-grid sources"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">AUDIO</p><h2>Mic & sound mixer</h2></div><span id="audioCount" class="counter">0</span></div>
+        <div id="audioGrid" class="audio-mixer"></div>
       </section>
     </section>
 
