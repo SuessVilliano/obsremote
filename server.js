@@ -51,10 +51,8 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 
-const clients = new Set();
-
 function send(ws, payload) {
-  if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(payload));
+  if (ws.readyState === 1) ws.send(JSON.stringify(payload));
 }
 
 async function getSnapshot(obs) {
@@ -165,7 +163,6 @@ async function handleCommand(client, message) {
 }
 
 wss.on('connection', async (ws, req) => {
-  clients.add(ws);
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pin = url.searchParams.get('pin') || '';
   const targetId = url.searchParams.get('target') || targets[0].id;
@@ -173,7 +170,6 @@ wss.on('connection', async (ws, req) => {
   if (REMOTE_PIN && pin !== REMOTE_PIN) {
     send(ws, { type: 'error', message: 'Incorrect remote PIN' });
     ws.close(1008, 'Unauthorized');
-    clients.delete(ws);
     return;
   }
 
@@ -191,7 +187,6 @@ wss.on('connection', async (ws, req) => {
   });
 
   ws.on('close', async () => {
-    clients.delete(ws);
     if (ws.obs) {
       try { await ws.obs.disconnect(); } catch {}
     }
