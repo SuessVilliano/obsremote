@@ -13,8 +13,11 @@ const els = {
   recordButton: document.querySelector('#recordButton'),
   recordState: document.querySelector('#recordState'),
   buildScenesButton: document.querySelector('#buildScenesButton'),
+  panicButton: document.querySelector('#panicButton'),
   sceneGrid: document.querySelector('#sceneGrid'),
   sceneCount: document.querySelector('#sceneCount'),
+  sourceGrid: document.querySelector('#sourceGrid'),
+  sourceCount: document.querySelector('#sourceCount'),
   audioGrid: document.querySelector('#audioGrid'),
   audioCount: document.querySelector('#audioCount'),
   toast: document.querySelector('#toast')
@@ -27,6 +30,7 @@ let reconnectAttempts = 0;
 let state = {
   currentScene: '',
   scenes: [],
+  sceneItems: [],
   audioInputs: [],
   streaming: false,
   recording: false,
@@ -43,7 +47,7 @@ function toast(message) {
   els.toast.textContent = message;
   els.toast.classList.remove('hidden');
   clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => els.toast.classList.add('hidden'), 2400);
+  toast.timer = setTimeout(() => els.toast.classList.add('hidden'), 2800);
 }
 
 function setStatus(connected, label = connected ? 'Connected' : 'Offline') {
@@ -61,6 +65,15 @@ function send(payload) {
   socket.send(JSON.stringify(payload));
 }
 
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 function renderScenes() {
   els.sceneCount.textContent = String(state.scenes.length);
   els.sceneGrid.replaceChildren(...state.scenes.map((sceneName) => {
@@ -72,14 +85,38 @@ function renderScenes() {
   }));
 }
 
+function renderSources() {
+  els.sourceCount.textContent = String(state.sceneItems.length);
+  els.sourceGrid.replaceChildren(...state.sceneItems.map((item) => {
+    const button = document.createElement('button');
+    button.className = `control-button source-toggle ${item.enabled ? 'source-on' : 'source-off'}`;
+    button.innerHTML = `<span>${escapeHtml(item.sourceName)}</span><span class="sub">${item.enabled ? 'VISIBLE — TAP TO HIDE' : 'HIDDEN — TAP TO SHOW'}</span>`;
+    button.addEventListener('click', () => send({ action: 'toggle-source', sceneName: state.currentScene, sceneItemId: item.sceneItemId }));
+    return button;
+  }));
+}
+
 function renderAudio() {
   els.audioCount.textContent = String(state.audioInputs.length);
   els.audioGrid.replaceChildren(...state.audioInputs.map((input) => {
-    const button = document.createElement('button');
-    button.className = `control-button ${input.muted ? 'muted' : 'live-audio'}`;
-    button.innerHTML = `<span>${escapeHtml(input.inputName)}</span><span class="sub">${input.muted ? 'MUTED — TAP TO UNMUTE' : 'LIVE — TAP TO MUTE'}</span>`;
-    button.addEventListener('click', () => send({ action: 'toggle-mute', inputName: input.inputName }));
-    return button;
+    const wrap = document.createElement('div');
+    wrap.className = `audio-strip ${input.muted ? 'muted' : 'live-audio'}`;
+    wrap.innerHTML = `
+      <button class="audio-main">
+        <span>${escapeHtml(input.inputName)}</span>
+        <span class="sub">${input.muted ? 'MUTED — TAP TO UNMUTE' : 'LIVE — TAP TO MUTE'}</span>
+      </button>
+      <div class="volume-row">
+        <span class="volume-label">${Math.round(input.volume ?? 100)}%</span>
+        <input class="volume-slider" type="range" min="0" max="200" step="1" value="${Math.max(0, Math.min(200, input.volume ?? 100))}" aria-label="${escapeHtml(input.inputName)} volume" />
+      </div>`;
+    const muteButton = wrap.querySelector('.audio-main');
+    const slider = wrap.querySelector('.volume-slider');
+    const label = wrap.querySelector('.volume-label');
+    muteButton.addEventListener('click', () => send({ action: 'toggle-mute', inputName: input.inputName }));
+    slider.addEventListener('input', () => { label.textContent = `${slider.value}%`; });
+    slider.addEventListener('change', () => send({ action: 'set-volume', inputName: input.inputName, volume: Number(slider.value) }));
+    return wrap;
   }));
 }
 
@@ -92,6 +129,7 @@ function renderTransport() {
 
 function renderAll() {
   renderScenes();
+  renderSources();
   renderAudio();
   renderTransport();
 }
@@ -99,15 +137,6 @@ function renderAll() {
 function applySnapshot(snapshot) {
   state = { ...state, ...snapshot };
   renderAll();
-}
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
 }
 
 function rememberConnection(pin, targetId) {
@@ -151,7 +180,6 @@ function connect({ pin = '', targetId, reconnecting = false } = {}) {
   const params = new URLSearchParams();
   if (pin) params.set('pin', pin);
   if (target) params.set('target', target);
-
   socket = new WebSocket(`${scheme}://${location.host}/ws?${params}`);
   setStatus(false, reconnecting ? 'Reconnecting…' : 'Connecting…');
 
@@ -165,6 +193,10 @@ function connect({ pin = '', targetId, reconnecting = false } = {}) {
   socket.addEventListener('message', (event) => {
     const message = JSON.parse(event.data);
     if (message.type === 'snapshot') applySnapshot(message.data);
+    if (message.type === 'scene-items') {
+      state.sceneItems = message.data || [];
+      renderSources();
+    }
     if (message.type === 'obs-status') {
       setStatus(Boolean(message.connected), message.connected ? message.targetName || 'Connected' : 'OBS Offline');
       if (message.targetId) {
@@ -176,6 +208,7 @@ function connect({ pin = '', targetId, reconnecting = false } = {}) {
       toast(message.message || 'Smart scenes ready');
       send({ action: 'refresh' });
     }
+    if (message.type === 'notice') toast(message.message || 'Done');
     if (message.type === 'event') {
       if (message.event === 'scene') {
         state.currentScene = message.sceneName;
@@ -185,6 +218,16 @@ function connect({ pin = '', targetId, reconnecting = false } = {}) {
         const input = state.audioInputs.find((item) => item.inputName === message.inputName);
         if (input) input.muted = Boolean(message.muted);
         renderAudio();
+      }
+      if (message.event === 'volume') {
+        const input = state.audioInputs.find((item) => item.inputName === message.inputName);
+        if (input) input.volume = Number(message.volume);
+        renderAudio();
+      }
+      if (message.event === 'source' && message.sceneName === state.currentScene) {
+        const item = state.sceneItems.find((source) => source.sceneItemId === Number(message.sceneItemId));
+        if (item) item.enabled = Boolean(message.enabled);
+        renderSources();
       }
       if (message.event === 'stream') {
         state.streaming = Boolean(message.active);
@@ -209,7 +252,6 @@ function connect({ pin = '', targetId, reconnecting = false } = {}) {
 async function init() {
   const response = await fetch('/api/config');
   config = await response.json();
-
   els.targetSelect.replaceChildren(...config.targets.map((target) => {
     const option = document.createElement('option');
     option.value = target.id;
@@ -221,24 +263,16 @@ async function init() {
   const storedTarget = savedValue(STORAGE.target) || config.targets[0]?.id;
   const remembered = localStorage.getItem(STORAGE.remember) === '1';
   if (els.rememberDevice) els.rememberDevice.checked = remembered || !storedPin;
-
   if (storedTarget) els.targetSelect.value = storedTarget;
 
   if (config.pinRequired && !storedPin) {
     els.loginCard.classList.remove('hidden');
     els.dashboard.classList.add('hidden');
-  } else {
-    connect({ pin: storedPin, targetId: storedTarget });
-  }
+  } else connect({ pin: storedPin, targetId: storedTarget });
 }
 
-els.connectButton.addEventListener('click', () => connect({
-  pin: els.pinInput.value.trim(),
-  targetId: els.targetSelect.value || config.targets[0]?.id
-}));
-els.pinInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') els.connectButton.click();
-});
+els.connectButton.addEventListener('click', () => connect({ pin: els.pinInput.value.trim(), targetId: els.targetSelect.value || config.targets[0]?.id }));
+els.pinInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') els.connectButton.click(); });
 els.targetSelect.addEventListener('change', () => {
   const targetId = els.targetSelect.value;
   if (localStorage.getItem(STORAGE.remember) === '1') localStorage.setItem(STORAGE.target, targetId);
@@ -247,7 +281,7 @@ els.targetSelect.addEventListener('change', () => {
 els.refreshButton.addEventListener('click', () => send({ action: 'refresh' }));
 els.forgetButton.addEventListener('click', () => {
   clearConnectionMemory();
-  toast('This device will no longer remember the connection');
+  toast('Saved connection cleared on this device');
 });
 els.streamButton.addEventListener('click', () => {
   const verb = state.streaming ? 'stop' : 'start';
@@ -255,25 +289,19 @@ els.streamButton.addEventListener('click', () => {
 });
 els.recordButton.addEventListener('click', () => send({ action: 'toggle-record' }));
 els.buildScenesButton.addEventListener('click', () => {
-  if (confirm('Build the smart starter scene pack in OBS? Existing scenes with the same names will be kept.')) {
-    send({ action: 'build-smart-scenes' });
-  }
+  if (confirm('Build or repair the full smart scene pack in OBS? Existing scenes are kept.')) send({ action: 'build-smart-scenes' });
 });
-document.querySelectorAll('.quick-scene').forEach((button) => {
-  button.addEventListener('click', () => {
-    const sceneName = button.dataset.scene;
-    if (!state.scenes.includes(sceneName)) {
-      toast('Build Smart Scenes first');
-      return;
-    }
-    send({ action: 'set-scene', sceneName });
-  });
+els.panicButton.addEventListener('click', () => {
+  if (confirm('Mute EVERY OBS audio source right now?')) send({ action: 'panic-mute' });
+});
+document.querySelectorAll('.smart-action').forEach((button) => {
+  button.addEventListener('click', () => send({ action: 'smart-action', preset: button.dataset.preset }));
+});
+document.querySelectorAll('.background-card').forEach((button) => {
+  button.addEventListener('click', () => send({ action: 'apply-background', page: button.dataset.page }));
 });
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/service-worker.js').catch(() => {});
-}
-
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(() => {});
 init().catch((error) => {
   setStatus(false);
   toast(error.message || 'Could not load configuration');
