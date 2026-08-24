@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0d12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>OBS Command Center</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">OBS REMOTE</p>
+        <h1>Command Center</h1>
+      </div>
+      <div id="statusPill" class="status-pill offline"><span></span><strong>Offline</strong></div>
+    </header>
+
+    <section id="loginCard" class="panel login-card hidden">
+      <h2>Connect your controller</h2>
+      <p>Enter the remote PIN configured on the Mac running OBS.</p>
+      <label>
+        Remote PIN
+        <input id="pinInput" inputmode="numeric" autocomplete="off" placeholder="••••••" />
+      </label>
+      <button id="connectButton" class="primary large">Connect</button>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <section class="panel toolbar">
+        <label class="target-select">
+          OBS Computer
+          <select id="targetSelect"></select>
+        </label>
+        <button id="refreshButton" class="secondary">Refresh</button>
+      </section>
+
+      <section class="hero-grid">
+        <button id="streamButton" class="action-card stream">
+          <span class="action-label">STREAM</span>
+          <strong id="streamState">Start Stream</strong>
+        </button>
+        <button id="recordButton" class="action-card record">
+          <span class="action-label">RECORD</span>
+          <strong id="recordState">Start Recording</strong>
+        </button>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SCENES</p>
+            <h2>Switch the show</h2>
+          </div>
+          <span id="sceneCount" class="counter">0</span>
+        </div>
+        <div id="sceneGrid" class="button-grid scenes"></div>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">AUDIO</p>
+            <h2>Mic & sound</h2>
+          </div>
+          <span id="audioCount" class="counter">0</span>
+        </div>
+        <div id="audioGrid" class="button-grid audio"></div>
+      </section>
+    </section>
+
+    <div id="toast" class="toast hidden"></div>
+  </main>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
