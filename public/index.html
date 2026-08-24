@@ -17,17 +17,19 @@
       <div>
         <p class="eyebrow">OBS REMOTE</p>
         <h1>Command Center</h1>
+        <p class="memory-note">Remembers this device automatically.</p>
       </div>
       <div id="statusPill" class="status-pill offline"><span></span><strong>Offline</strong></div>
     </header>
 
     <section id="loginCard" class="panel login-card hidden">
       <h2>Connect your controller</h2>
-      <p>Enter the remote PIN configured on the Mac running OBS.</p>
+      <p>Enter the remote PIN configured on the Mac running OBS. This device can remember it for next time.</p>
       <label>
         Remote PIN
         <input id="pinInput" inputmode="numeric" autocomplete="off" placeholder="••••••" />
       </label>
+      <label class="remember-row"><input id="rememberDevice" type="checkbox" checked /> Remember this tablet / phone</label>
       <button id="connectButton" class="primary large">Connect</button>
     </section>
 
@@ -38,6 +40,7 @@
           <select id="targetSelect"></select>
         </label>
         <button id="refreshButton" class="secondary">Refresh</button>
+        <button id="forgetButton" class="secondary ghost">Forget device</button>
       </section>
 
       <section class="hero-grid">
@@ -49,6 +52,25 @@
           <span class="action-label">RECORD</span>
           <strong id="recordState">Start Recording</strong>
         </button>
+      </section>
+
+      <section class="panel smart-panel">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SMART SETUP</p>
+            <h2>Build your streaming scenes</h2>
+          </div>
+          <span class="badge">ONE TAP</span>
+        </div>
+        <p class="panel-copy">Creates Starting Soon, Game + Facecam, Full Camera, BRB and Ending scenes, plus built-in animated browser backgrounds. It will also try to detect your webcam and Xbox/capture source automatically.</p>
+        <div class="template-grid">
+          <button id="buildScenesButton" class="template-card"><strong>Build Smart Scenes</strong><span>Set up the whole starter pack</span></button>
+          <button class="template-card quick-scene" data-scene="Starting Soon"><strong>Starting Soon</strong><span>Pre-stream lobby</span></button>
+          <button class="template-card quick-scene" data-scene="Game + Facecam"><strong>Game + Facecam</strong><span>Xbox + camera</span></button>
+          <button class="template-card quick-scene" data-scene="Full Camera"><strong>Full Camera</strong><span>Talking / reactions</span></button>
+          <button class="template-card quick-scene" data-scene="BRB"><strong>BRB</strong><span>Step away safely</span></button>
+          <button class="template-card quick-scene" data-scene="Ending"><strong>Ending</strong><span>Close the show</span></button>
+        </div>
       </section>
 
       <section class="panel">
