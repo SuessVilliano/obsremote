@@ -1,4 +1,4 @@
-const CACHE='obsremote-v5-1-rc1';
+const CACHE='obsremote-v5-1-rc2';
 const SHELL=['/','/index.html','/styles.css?v=50','/v5-ui.css?v=51','/audio-editor.css?v=52','/app.js?v=50','/v5-ui.js?v=51','/audio-editor.js?v=52','/manifest.webmanifest','/soundboard-player.html','/music-player.html'];
 self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)))});
 self.addEventListener('activate',event=>event.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))])));
