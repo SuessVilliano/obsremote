@@ -1,6 +1,24 @@
 const NativeWebSocket=window.WebSocket;
 function clearSavedRemotePin(){localStorage.removeItem('obsremote-pin');sessionStorage.removeItem('obsremote-pin');localStorage.removeItem('obsremote-remember')}
-function installWebSocketAuthGuard(){if(window.__obsremoteWsGuardInstalled)return;window.__obsremoteWsGuardInstalled=true;class GuardedWebSocket extends NativeWebSocket{constructor(url,protocols){super(url,protocols);this.addEventListener('close',event=>{const reason=String(event.reason||'').toLowerCase();if(event.code===1008||reason.includes('unauthorized')||reason.includes('pin')){clearSavedRemotePin();sessionStorage.setItem('obsremote-auth-reset','1');setTimeout(()=>location.reload(),80)}})}Object.setPrototypeOf(GuardedWebSocket,NativeWebSocket);window.WebSocket=GuardedWebSocket}
+function installWebSocketAuthGuard(){
+  if(window.__obsremoteWsGuardInstalled)return;
+  window.__obsremoteWsGuardInstalled=true;
+  class GuardedWebSocket extends NativeWebSocket{
+    constructor(url,protocols){
+      super(url,protocols);
+      this.addEventListener('close',event=>{
+        const reason=String(event.reason||'').toLowerCase();
+        if(event.code===1008||reason.includes('unauthorized')||reason.includes('pin')){
+          clearSavedRemotePin();
+          sessionStorage.setItem('obsremote-auth-reset','1');
+          setTimeout(()=>location.reload(),80);
+        }
+      });
+    }
+  }
+  Object.setPrototypeOf(GuardedWebSocket,NativeWebSocket);
+  window.WebSocket=GuardedWebSocket;
+}
 installWebSocketAuthGuard();
 
 const $=s=>document.querySelector(s);
@@ -15,11 +33,9 @@ function closeDrawerOnOutside(){document.addEventListener('pointerdown',e=>{if(i
 function recoverBadPin(){const toast=$('#toast');if(!toast)return;let recovering=false;if(sessionStorage.getItem('obsremote-auth-reset')==='1'){sessionStorage.removeItem('obsremote-auth-reset');setTimeout(()=>{toast.textContent='Saved PIN was rejected. Enter the current Remote PIN.';toast.classList.remove('hidden')},120)}new MutationObserver(()=>{if(recovering)return;const text=toast.textContent.toLowerCase();if(!text.includes('incorrect remote pin')&&!text.includes('unauthorized'))return;recovering=true;clearSavedRemotePin();toast.textContent='Saved PIN rejected. Re-enter your Remote PIN.';setTimeout(()=>location.reload(),100)}).observe(toast,{childList:true,characterData:true,subtree:true})}
 function smoothReconnectStatus(){const pill=$('#statusPill');if(!pill)return;const strong=pill.querySelector('strong');if(!strong)return;new MutationObserver(()=>{const text=strong.textContent||'';if(/^Reconnecting in \d+s$/i.test(text))strong.textContent='Reconnecting…'}).observe(strong,{childList:true,characterData:true,subtree:true})}
 function registerServiceWorker(){if(!('serviceWorker'in navigator)||!window.isSecureContext&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1')return;window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).catch(error=>console.warn('Service worker registration failed:',error.message)))}
-
 function vibrate(ms=16){try{navigator.vibrate?.(ms)}catch{}}
 function tactileSelector(){return '.control-button,.quick-sound,.sound-fire,.action-card,.music-controls button,.audio-main,.primary,.secondary,.mini-button'}
 function addTactileControls(){document.addEventListener('pointerdown',e=>{const b=e.target.closest(tactileSelector());if(!b||b.disabled)return;const r=b.getBoundingClientRect();b.style.setProperty('--press-x',`${e.clientX-r.left}px`);b.style.setProperty('--press-y',`${e.clientY-r.top}px`);b.classList.add('deck-pressed','deck-ripple');vibrate(b.matches('.action-card')?24:14);setTimeout(()=>b.classList.remove('deck-ripple'),90)},{passive:true});const release=e=>{const b=e.target.closest?.(tactileSelector());if(!b)return;setTimeout(()=>b.classList.remove('deck-pressed'),35)};document.addEventListener('pointerup',release,{passive:true});document.addEventListener('pointercancel',release,{passive:true});document.addEventListener('keydown',e=>{if(!['Enter',' '].includes(e.key))return;const b=e.target.closest?.(tactileSelector());if(!b||b.disabled)return;b.classList.add('deck-pressed');vibrate(12)});document.addEventListener('keyup',e=>{if(!['Enter',' '].includes(e.key))return;e.target.closest?.(tactileSelector())?.classList.remove('deck-pressed')})}
 function wireMusicStop(){const b=$('#musicStop');if(!b||b.dataset.wired)return;b.dataset.wired='1';b.addEventListener('click',async()=>{try{const pin=localStorage.getItem('obsremote-pin')||sessionStorage.getItem('obsremote-pin')||'';const r=await fetch('/api/music/control',{method:'POST',headers:{'content-type':'application/json','x-remote-pin':pin},body:JSON.stringify({action:'stop'})});if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||'Stop failed');b.classList.add('deck-confirmed');setTimeout(()=>b.classList.remove('deck-confirmed'),500)}catch{b.classList.add('deck-error');setTimeout(()=>b.classList.remove('deck-error'),350)}})}
 function markConfirmedButtons(){const obs=new MutationObserver(records=>{for(const rec of records){if(rec.type!=='attributes')continue;const el=rec.target;if(!(el instanceof HTMLElement))continue;if(el.matches('.control-button.current,.action-card.active,.source-on,.audio-strip.live-audio .audio-main')){el.classList.add('deck-confirmed');setTimeout(()=>el.classList.remove('deck-confirmed'),500)}}});obs.observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class']})}
-
 ensureMinimize();setMinimized(localStorage.getItem(MIN_KEY)==='1');restorePosition();makeDraggable();closeDrawerOnOutside();recoverBadPin();smoothReconnectStatus();registerServiceWorker();addTactileControls();wireMusicStop();markConfirmedButtons();window.addEventListener('resize',()=>{if(innerWidth<=760){widget?.style.removeProperty('left');widget?.style.removeProperty('top');widget?.style.removeProperty('right');widget?.style.removeProperty('bottom')}else restorePosition()});
