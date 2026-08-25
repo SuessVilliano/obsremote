@@ -1,17 +1,147 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><meta name="theme-color" content="#0a0d12"/><meta name="apple-mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/><title>OBS Command Center</title><link rel="manifest" href="/manifest.webmanifest"/><link rel="icon" href="/icon.svg" type="image/svg+xml"/><link rel="stylesheet" href="/styles.css"/></head>
-<body><main class="app-shell">
-<header class="topbar"><div><p class="eyebrow">OBS REMOTE • V2.1</p><h1>Command Center</h1><p class="memory-note">Your tablet remembers this setup and reconnects automatically.</p></div><div id="statusPill" class="status-pill offline"><span></span><strong>Offline</strong></div></header>
-<section id="loginCard" class="panel login-card hidden"><h2>Connect your controller</h2><p>Enter the remote PIN configured on the Mac running OBS.</p><label>Remote PIN<input id="pinInput" inputmode="numeric" autocomplete="off" placeholder="••••••"/></label><label class="remember-row"><input id="rememberDevice" type="checkbox" checked/> Remember this tablet / phone</label><button id="connectButton" class="primary large">Connect</button></section>
-<section id="dashboard" class="hidden">
-<section class="panel toolbar"><label class="target-select">OBS Computer<select id="targetSelect"></select></label><button id="refreshButton" class="secondary">Refresh</button><button id="forgetButton" class="secondary ghost">Forget device</button></section>
-<section class="hero-grid"><button id="streamButton" class="action-card stream"><span class="action-label">STREAM</span><strong id="streamState">Start Stream</strong></button><button id="recordButton" class="action-card record"><span class="action-label">RECORD</span><strong id="recordState">Start Recording</strong></button></section>
-<section class="panel smart-panel"><div class="section-heading"><div><p class="eyebrow">SHOW MODE</p><h2>One-tap streaming macros</h2></div><span class="badge">SMART</span></div><div class="macro-grid">
-<button class="macro-card smart-action" data-preset="starting"><strong>⏳ Starting</strong><span>Lobby + mic muted</span></button><button class="macro-card smart-action hot" data-preset="game"><strong>🎮 Game</strong><span>Xbox + facecam + mic live</span></button><button class="macro-card smart-action" data-preset="xbox"><strong>🕹 Xbox Full</strong><span>Game fills the screen</span></button><button class="macro-card smart-action" data-preset="camera"><strong>🎥 Full Cam</strong><span>Camera focus + mic live</span></button><button class="macro-card smart-action" data-preset="chat"><strong>💬 Just Chatting</strong><span>Studio layout + camera</span></button><button class="macro-card smart-action warn" data-preset="brb"><strong>☕ BRB</strong><span>Break screen + mic muted</span></button><button class="macro-card smart-action" data-preset="ending"><strong>👋 Ending</strong><span>Outro + mic muted</span></button><button id="panicButton" class="macro-card danger"><strong>🔇 PANIC MUTE</strong><span>Mute every OBS audio source</span></button></div></section>
-<section class="panel smart-panel"><div class="section-heading"><div><p class="eyebrow">SMART SETUP</p><h2>Build the whole scene pack</h2></div><span class="badge">ONE TAP</span></div><p class="panel-copy">Creates Starting Soon, Game + Facecam, Xbox Fullscreen, Full Camera, Just Chatting, BRB and Ending. It tries to detect your Logitech camera, Xbox/capture source and main mic automatically.</p><button id="buildScenesButton" class="primary large">Build / Repair Smart Scenes</button></section>
-<section class="panel"><div class="section-heading"><div><p class="eyebrow">SOUNDBOARD</p><h2>Fire sounds into OBS</h2></div><span class="badge">OBS AUDIO</span></div><p class="panel-copy">These are synthesized locally and routed through an OBS Browser Source, so they can be heard on stream.</p><div class="macro-grid"><button class="macro-card sfx-card" data-sound="click"><strong>✨ Click</strong><span>Quick UI hit</span></button><button class="macro-card sfx-card" data-sound="success"><strong>✅ Success</strong><span>Three-note win</span></button><button class="macro-card sfx-card warn" data-sound="alert"><strong>🚨 Alert</strong><span>Attention cue</span></button><button class="macro-card sfx-card" data-sound="swoosh"><strong>💨 Swoosh</strong><span>Scene-change feel</span></button><button class="macro-card sfx-card hot" data-sound="hype"><strong>🔥 Hype</strong><span>Rising energy sting</span></button></div></section>
-<section class="panel"><div class="section-heading"><div><p class="eyebrow">BACKGROUNDS</p><h2>Drop a look into the current scene</h2></div></div><div class="background-grid"><button class="background-card" data-page="studio.html"><strong>Studio</strong><span>Blue + purple creator room</span></button><button class="background-card" data-page="neon.html"><strong>Neon</strong><span>Cyber command center</span></button><button class="background-card" data-page="minimal.html"><strong>Minimal</strong><span>Clean premium office</span></button><button class="background-card" data-page="starting.html"><strong>Starting</strong><span>Animated pre-show look</span></button><button class="background-card" data-page="brb.html"><strong>BRB</strong><span>Animated break screen</span></button><button class="background-card" data-page="ending.html"><strong>Ending</strong><span>Animated outro</span></button></div></section>
-<section class="panel"><div class="section-heading"><div><p class="eyebrow">SCENES</p><h2>Switch the show</h2></div><span id="sceneCount" class="counter">0</span></div><div id="sceneGrid" class="button-grid scenes"></div></section>
-<section class="panel"><div class="section-heading"><div><p class="eyebrow">CURRENT SCENE</p><h2>Show / hide sources</h2></div><span id="sourceCount" class="counter">0</span></div><div id="sourceGrid" class="button-grid sources"></div></section>
-<section class="panel"><div class="section-heading"><div><p class="eyebrow">AUDIO</p><h2>Mic & sound mixer</h2></div><span id="audioCount" class="counter">0</span></div><div id="audioGrid" class="audio-mixer"></div></section>
-</section><div id="toast" class="toast hidden"></div></main><script type="module" src="/app.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <meta name="theme-color" content="#0a0d12"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>OBS Command Center</title>
+  <link rel="manifest" href="/manifest.webmanifest"/>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml"/>
+  <link rel="stylesheet" href="/styles.css"/>
+</head>
+<body>
+<main class="app-shell">
+  <header class="topbar">
+    <div><p class="eyebrow">OBS REMOTE • V3</p><h1>Command Center</h1><p class="memory-note">Control, monitor, automate, and build your show from any device.</p></div>
+    <div id="statusPill" class="status-pill offline"><span></span><strong>Offline</strong></div>
+  </header>
+
+  <section id="loginCard" class="panel login-card hidden">
+    <h2>Connect your controller</h2>
+    <p>Enter the remote PIN configured on the Mac running OBS.</p>
+    <label>Remote PIN<input id="pinInput" inputmode="numeric" autocomplete="off" placeholder="••••••"/></label>
+    <label class="remember-row"><input id="rememberDevice" type="checkbox" checked/> Remember this tablet / phone</label>
+    <button id="connectButton" class="primary large">Connect</button>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <nav class="menu-tabs" aria-label="Command center sections">
+      <button class="menu-tab active" data-tab="control">🎛 Control</button>
+      <button class="menu-tab" data-tab="preview">📺 Viewer</button>
+      <button class="menu-tab" data-tab="sounds">🔊 Sounds</button>
+      <button class="menu-tab" data-tab="assistant">✨ AI</button>
+      <button class="menu-tab" data-tab="docs">📖 Docs</button>
+      <button class="menu-tab" data-tab="settings">⚙️ Setup</button>
+    </nav>
+
+    <section class="tab-view active" data-view="control">
+      <section class="hero-grid">
+        <button id="streamButton" class="action-card stream"><span class="action-label">STREAM</span><strong id="streamState">Start Stream</strong></button>
+        <button id="recordButton" class="action-card record"><span class="action-label">RECORD</span><strong id="recordState">Start Recording</strong></button>
+      </section>
+
+      <section class="panel smart-panel">
+        <div class="section-heading"><div><p class="eyebrow">SHOW MODE</p><h2>One-tap streaming macros</h2></div><span class="badge">SMART</span></div>
+        <div class="macro-grid">
+          <button class="macro-card smart-action" data-preset="starting"><strong>⏳ Starting</strong><span>Lobby + mic muted</span></button>
+          <button class="macro-card smart-action hot" data-preset="game"><strong>🎮 Game</strong><span>Xbox + facecam + mic live</span></button>
+          <button class="macro-card smart-action" data-preset="xbox"><strong>🕹 Xbox Full</strong><span>Game fills the screen</span></button>
+          <button class="macro-card smart-action" data-preset="camera"><strong>🎥 Full Cam</strong><span>Camera focus + mic live</span></button>
+          <button class="macro-card smart-action" data-preset="chat"><strong>💬 Just Chatting</strong><span>Studio layout + camera</span></button>
+          <button class="macro-card smart-action warn" data-preset="brb"><strong>☕ BRB</strong><span>Break screen + mic muted</span></button>
+          <button class="macro-card smart-action" data-preset="ending"><strong>👋 Ending</strong><span>Outro + mic muted</span></button>
+          <button id="panicButton" class="macro-card danger"><strong>🔇 PANIC MUTE</strong><span>Mute every OBS audio source</span></button>
+        </div>
+      </section>
+
+      <section class="panel smart-panel">
+        <div class="section-heading"><div><p class="eyebrow">SMART SETUP</p><h2>Build the whole scene pack</h2></div><span class="badge">ONE TAP</span></div>
+        <p class="panel-copy">Creates and repairs Starting Soon, Game + Facecam, Xbox Fullscreen, Full Camera, Just Chatting, BRB and Ending. It also adds the custom soundboard source to each smart scene.</p>
+        <button id="buildScenesButton" class="primary large">Build / Repair Smart Scenes</button>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">BACKGROUNDS</p><h2>Drop a look into the current scene</h2></div></div>
+        <div class="background-grid">
+          <button class="background-card" data-page="studio.html"><strong>Studio</strong><span>Blue + purple creator room</span></button>
+          <button class="background-card" data-page="neon.html"><strong>Neon</strong><span>Cyber command center</span></button>
+          <button class="background-card" data-page="minimal.html"><strong>Minimal</strong><span>Clean premium office</span></button>
+          <button class="background-card" data-page="starting.html"><strong>Starting</strong><span>Animated pre-show</span></button>
+          <button class="background-card" data-page="brb.html"><strong>BRB</strong><span>Animated break screen</span></button>
+          <button class="background-card" data-page="ending.html"><strong>Ending</strong><span>Animated outro</span></button>
+        </div>
+      </section>
+
+      <section class="panel"><div class="section-heading"><div><p class="eyebrow">SCENES</p><h2>Switch the show</h2></div><span id="sceneCount" class="counter">0</span></div><div id="sceneGrid" class="button-grid scenes"></div></section>
+      <section class="panel"><div class="section-heading"><div><p class="eyebrow">CURRENT SCENE</p><h2>Show / hide sources</h2></div><span id="sourceCount" class="counter">0</span></div><div id="sourceGrid" class="button-grid sources"></div></section>
+      <section class="panel"><div class="section-heading"><div><p class="eyebrow">AUDIO</p><h2>Mic & sound mixer</h2></div><span id="audioCount" class="counter">0</span></div><div id="audioGrid" class="audio-mixer"></div></section>
+    </section>
+
+    <section class="tab-view" data-view="preview">
+      <section class="panel viewer-panel">
+        <div class="section-heading"><div><p class="eyebrow">PROGRAM OUTPUT</p><h2>What viewers see</h2></div><span id="previewLive" class="badge">AUTO</span></div>
+        <div class="viewer-frame"><img id="previewImage" alt="Current OBS program preview"/><div id="previewEmpty" class="viewer-empty">Waiting for OBS preview…</div></div>
+        <div class="viewer-footer"><span id="previewScene">No scene</span><span>Updates every ~2 seconds</span><button id="previewRefresh" class="secondary">Refresh now</button></div>
+      </section>
+    </section>
+
+    <section class="tab-view" data-view="sounds">
+      <section class="panel">
+        <div class="section-heading"><div><p class="eyebrow">CUSTOM SOUNDBOARD</p><h2>Your audio, not generic beeps</h2></div><span class="badge">MP3 • WAV • MORE</span></div>
+        <p class="panel-copy">Upload MP3/WAV/M4A/OGG/WebM audio or record a voice clip right here. Tapping a pad routes the sound through OBS so the stream hears it.</p>
+        <div class="sound-builder">
+          <label>Sound name<input id="soundName" maxlength="60" placeholder="Air horn, My intro, Let's go…"/></label>
+          <label>Upload audio<input id="soundFile" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm"/></label>
+          <button id="uploadSound" class="primary">Add sound</button>
+        </div>
+        <div class="voice-recorder">
+          <label>Voice clip name<input id="voiceName" maxlength="60" placeholder="My voice drop"/></label>
+          <button id="recordVoice" class="secondary">🎙 Start recording</button>
+          <span id="recordingState" class="recording-state">Ready</span>
+        </div>
+      </section>
+      <section class="panel"><div class="section-heading"><div><p class="eyebrow">PADS</p><h2>Tap to play in OBS</h2></div><span id="soundCount" class="counter">0</span></div><div id="soundGrid" class="sound-grid"></div></section>
+    </section>
+
+    <section class="tab-view" data-view="assistant">
+      <section class="panel ai-panel">
+        <div class="section-heading"><div><p class="eyebrow">OBS REMOTE AI</p><h2>Tell the studio what you want</h2></div><span id="aiBadge" class="badge">CHECKING</span></div>
+        <p class="panel-copy">The assistant gets your live scene/audio/source state and can switch scenes, run smart modes, mute inputs, change volume, add backgrounds, play your custom sounds, repair scenes, and explicitly start/stop stream or recording when asked.</p>
+        <div id="aiChat" class="ai-chat" aria-live="polite"><div class="ai-message assistant">Try: “Put me on Game + Facecam, make sure my mic is live, and play my intro sound.”</div></div>
+        <form id="aiForm" class="ai-compose"><textarea id="aiInput" rows="3" placeholder="What do you want OBS to do?"></textarea><button id="aiSend" class="primary" type="submit">Send</button></form>
+      </section>
+    </section>
+
+    <section class="tab-view" data-view="docs">
+      <section class="panel docs-panel">
+        <p class="eyebrow">QUICK GUIDE</p><h2>How to use OBS Remote</h2>
+        <div class="docs-grid">
+          <article><h3>1. Control</h3><p>Use Show Mode for fast scene changes. Game brings up Xbox + facecam. Xbox Full removes the facecam. BRB and Ending mute your main mic automatically.</p></article>
+          <article><h3>2. Viewer screen</h3><p>The Viewer tab requests screenshots of the current OBS Program scene. It is a low-bandwidth confidence monitor, so expect a short delay rather than full-motion video.</p></article>
+          <article><h3>3. Custom sounds</h3><p>Upload an audio file or record a voice clip. Press the large pad to fire it through an OBS Browser Source. The first play in a new scene may take a moment while the source is added.</p></article>
+          <article><h3>4. AI assistant</h3><p>Add an OpenAI API key to the Mac’s .env file to enable AI. The key stays on the Mac server and is never sent to your tablet. The assistant only receives the OBS context needed for the request.</p></article>
+          <article><h3>5. Green screen</h3><p>Keep your Logitech camera source above the background source. Apply a Chroma Key filter to the camera. Light the green screen evenly and keep some distance between you and the fabric.</p></article>
+          <article><h3>6. Audio</h3><p>Keep the Mini mic as your main stream mic and set it to Mono in OBS Advanced Audio Properties if it plays in one ear. Mute the webcam mic unless you intentionally need it.</p></article>
+          <article><h3>7. Anywhere access</h3><p>Your Cloudflare hostname can reach this command center from phone, tablet, or computer. Keep raw OBS WebSocket port 4455 private; only the command-center server should talk to it.</p></article>
+          <article><h3>8. Safety</h3><p>Start/Stop Stream still requires deliberate control. The AI server also refuses to trigger streaming unless your message explicitly asks to start or stop the stream.</p></article>
+        </div>
+      </section>
+    </section>
+
+    <section class="tab-view" data-view="settings">
+      <section class="panel toolbar">
+        <label class="target-select">OBS Computer<select id="targetSelect"></select></label>
+        <button id="refreshButton" class="secondary">Refresh OBS</button>
+        <button id="forgetButton" class="secondary ghost">Forget this device</button>
+      </section>
+      <section class="panel"><p class="eyebrow">CONNECTION</p><h2>Remote status</h2><p class="panel-copy">This device remembers the selected OBS computer and PIN locally. OBS passwords remain on the Mac relay server.</p><div class="info-row"><span>Public app</span><strong id="publicUrl"></strong></div><div class="info-row"><span>WebSocket</span><strong>Private through relay</strong></div><div class="info-row"><span>AI model</span><strong id="aiModelLabel">Not configured</strong></div></section>
+    </section>
+  </section>
+
+  <div id="toast" class="toast hidden"></div>
+</main>
+<script type="module" src="/app.js"></script>
+</body>
+</html>
