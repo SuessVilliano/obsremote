@@ -42,6 +42,22 @@ jobs:
           node -e "const x=require('/tmp/health.json'); if(!x.ok) process.exit(1)"
           curl --fail --silent http://127.0.0.1:3100/ | grep -q 'OBS REMOTE'
 
+  browser-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package.json
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Desktop and mobile UI smoke tests
+        run: npm run test:e2e
+
   security-shape:
     runs-on: ubuntu-latest
     steps:
