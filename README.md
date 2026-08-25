@@ -1,37 +1,19 @@
-# OBS Remote Command Center v2
+# OBS Remote Command Center v3
 
-Turn an Amazon Fire tablet, phone, or spare browser into a free Stream Deck-style command center for OBS.
+Turn an Amazon Fire tablet, phone, or spare browser into a free Stream Deck-style OBS command center.
 
-## What v2 does
+## V3 highlights
 
-- Remembers the tablet/phone and reconnects automatically
-- Switches scenes with large touch buttons
-- Start/stop stream and recording
-- Mute/unmute every OBS audio input
-- Adjust audio volume from the tablet
-- Show/hide individual sources in the current scene
-- One-tap streaming macros for Starting, Game, Xbox Fullscreen, Full Camera, Just Chatting, BRB and Ending
-- Emergency **PANIC MUTE** for all OBS audio
-- One-tap Smart Scene Builder that creates/repairs a starter streaming scene pack
-- Attempts to auto-detect Logitech/webcam, Xbox/capture-card and main microphone sources
-- Built-in animated browser backgrounds plus Studio, Neon and Minimal looks
-- Multiple OBS computer support
-- PWA/home-screen support for tablets and phones
-
-The tablet does **not** connect directly to OBS. A small Node.js relay runs on the computer hosting OBS and talks to OBS locally. Your OBS WebSocket password never needs to be stored on the tablet.
+- Persistent menu tabs for **Control, Viewer, Sounds, AI, Docs, and Setup**
+- Low-bandwidth **Viewer** screen showing the current OBS Program scene
+- Custom soundboard: upload MP3, WAV, M4A, OGG, or WebM audio
+- Record short voice clips from a supported phone/tablet/browser microphone and save them as sound pads
+- Custom sounds route through an OBS Browser Source so the stream can hear them
+- Built-in AI assistant that can inspect live OBS state and carry out approved OBS actions
+- In-app documentation explaining scenes, green screen, audio, remote access, soundboard, and AI
+- Existing V2 features: smart scenes, scene/source control, audio mixer, backgrounds, reconnect, PWA, multiple OBS targets, and panic mute
 
 ## Install / update
-
-For a fresh install:
-
-```bash
-git clone https://github.com/SuessVilliano/obsremote.git
-cd obsremote
-npm install
-cp .env.example .env
-```
-
-For an existing install:
 
 ```bash
 git pull
@@ -41,7 +23,7 @@ npm start
 
 If the server is already running, stop it first with **Control+C**, then pull and restart it.
 
-## OBS WebSocket settings
+## OBS WebSocket
 
 In OBS Studio open **Tools → WebSocket Server Settings**.
 
@@ -50,7 +32,7 @@ In OBS Studio open **Tools → WebSocket Server Settings**.
 - If OBS authentication is enabled, put that password in `.env`
 - If OBS shows **[Auth Disabled]**, leave `OBS_WS_PASSWORD=` blank
 
-Example `.env`:
+Example:
 
 ```env
 PORT=3000
@@ -60,27 +42,42 @@ OBS_WS_URL=ws://127.0.0.1:4455
 OBS_WS_PASSWORD=
 ```
 
-Use your own `REMOTE_PIN` if the command center will ever be reachable beyond your private LAN.
+## Enable the AI assistant
 
-## Open it on the tablet
+The AI key stays on the Mac server. It is never sent to the tablet/browser.
 
-Run:
+Add these lines to your local `.env`:
 
-```bash
-npm start
+```env
+OPENAI_API_KEY=your_api_key_here
+AI_MODEL=gpt-5-mini
 ```
 
-The server prints local/LAN addresses. Open the Mac's LAN address in Silk, Safari, Chrome, etc. Example:
+Then restart `npm start`.
 
-```text
-http://192.168.1.96:3000
-```
+The AI assistant uses the OpenAI Responses API and receives a compact snapshot of the current OBS scenes, sources, audio inputs, and custom sound names/IDs. It can execute only the allow-listed OBS operations implemented by the server. Stream/record actions require an explicit request in the user's message.
 
-Keep the Terminal/server process running while using the remote.
+## Viewer screen
 
-## Build the smart scene pack
+Open the **Viewer** tab. The browser requests a compressed screenshot of the current OBS Program scene about every two seconds. This is intended as a confidence monitor, not a zero-latency video monitor.
 
-Tap **Build / Repair Smart Scenes** once. It creates:
+## Custom sounds and voice clips
+
+Open **Sounds**.
+
+1. Give the sound a name.
+2. Upload an audio file, or press **Start recording** to record a voice clip from the current browser device.
+3. The new pad appears in the soundboard.
+4. Tap the large pad to play the sound through OBS.
+5. Use **Preview** to audition it locally on the device, or **Delete** to remove it.
+
+Runtime sound files are stored under `public/uploads/sounds/` and metadata under `data/`. Both are ignored by Git, so personal recordings are not committed to the public repository.
+
+The first time a sound is played in a scene, OBS Remote automatically adds the hidden `OBSRemote • Custom Soundboard` Browser Source. The Smart Scene Builder also adds it to every smart scene in advance.
+
+## Smart scene pack
+
+Tap **Build / Repair Smart Scenes** to create/repair:
 
 - Starting Soon
 - Game + Facecam
@@ -90,107 +87,58 @@ Tap **Build / Repair Smart Scenes** once. It creates:
 - BRB
 - Ending
 
-It also creates built-in browser backgrounds and tries to reuse existing OBS sources that look like your camera, Xbox/capture card and microphone.
+The builder attempts to reuse sources named like Logitech/webcam/camera, Xbox/capture card, and Mini Mic/microphone.
 
-The builder is intentionally non-destructive: if a scene already exists, it keeps it and adds missing smart pieces instead of deleting the scene.
+## Public access
 
-### Smart macros
+Keep raw OBS WebSocket port `4455` private. Publish only the command-center server through a secure HTTPS tunnel such as Cloudflare Tunnel.
 
-After the scene pack exists:
+Example architecture:
 
-- **Starting** → Starting Soon + main mic muted
-- **Game** → Game + Facecam + main mic live
-- **Xbox Full** → Xbox Fullscreen + main mic live
-- **Full Cam** → Full Camera + main mic live
-- **Just Chatting** → studio/chat scene + main mic live
-- **BRB** → BRB + main mic muted
-- **Ending** → Ending + main mic muted
-- **PANIC MUTE** → mutes every OBS audio input
+```text
+Phone / Fire tablet / laptop
+          │
+      HTTPS / WSS
+          │
+   Cloudflare Tunnel
+          │
+   OBS Remote :3000
+          │
+ ws://127.0.0.1:4455
+          │
+        OBS
+```
 
-## Background library
-
-The repo ships browser-source backgrounds under `public/backgrounds/`:
-
-- `studio.html`
-- `neon.html`
-- `minimal.html`
-- `starting.html`
-- `brb.html`
-- `ending.html`
-
-The remote can add these directly to the current OBS scene. They are HTML/CSS browser sources, so they stay lightweight and require no downloaded video files.
+Use `REMOTE_PIN` and, for a public hostname, put Cloudflare Access or equivalent authentication in front of the app.
 
 ## Multiple OBS computers
-
-Use `OBS_TARGETS_JSON` instead of the single `OBS_*` settings:
 
 ```env
 OBS_TARGETS_JSON=[{"id":"mac-mini","name":"Mac mini OBS","url":"ws://127.0.0.1:4455","password":""},{"id":"gaming-pc","name":"Gaming PC OBS","url":"ws://192.168.1.50:4455","password":"your-password"}]
 ```
 
-Each OBS target must be reachable from the computer running this command-center server.
+Each target must be reachable from the Mac/server running OBS Remote.
 
-## Internet access
+## macOS auto-start
 
-**Never port-forward OBS port 4455 directly to the public internet.**
+The repo includes `scripts/install-macos-launchagent.sh` to keep OBS Remote running after login. Review it first, then run it from the repo if you want the command center to start automatically.
 
-For away-from-home control, expose only the command-center web server through a private VPN or authenticated HTTPS tunnel such as Tailscale or Cloudflare Tunnel.
+## Security notes
 
-```text
-Phone / Fire tablet
-        │
-   HTTPS / WSS
-        │
-Secure tunnel / private VPN
-        │
-OBS Remote :3000 on Mac mini
-        │
- ws://127.0.0.1:4455
-        │
-      OBS Studio
-```
-
-Set `REMOTE_PIN` before exposing the app outside the home LAN, and prefer provider-level authentication in front of it too.
-
-## Troubleshooting
-
-### Old interface still appears after `git pull`
-
-The app is a PWA and may have cached the previous version. Reload the page once or close/reopen the home-screen app. v2 uses a new service-worker cache and will replace v1 automatically.
-
-### OBS says offline
-
-- OBS must be open
-- WebSocket server must be enabled
-- Port should be `4455`
-- If OBS says `[Auth Disabled]`, `.env` should contain `OBS_WS_PASSWORD=`
-- If authentication is enabled, the `.env` password must match OBS
-- When the relay runs on the same Mac as OBS, use `OBS_WS_URL=ws://127.0.0.1:4455`
-
-### Tablet cannot open the page
-
-- Tablet and Mac must be on the same LAN/Wi-Fi for local use
-- Keep `npm start` running
-- Open the LAN URL printed by the server
-- Allow Node through macOS Firewall if prompted
-
-### Camera/Xbox/mic was not auto-detected
-
-The smart builder matches source names heuristically. Rename OBS sources to clear names such as `Logitech Webcam`, `Xbox Capture`, and `Mini Mic`, then tap **Build / Repair Smart Scenes** again.
-
-## Security
-
-- `.env` is ignored by Git and should never be committed
-- OBS credentials stay on the relay computer
-- The browser only receives OBS state, not the OBS password
-- Start/stop stream requires confirmation
-- Raw OBS WebSocket should remain private
+- `.env` is ignored by Git
+- User sound uploads and voice recordings are ignored by Git
+- OBS credentials remain on the relay server
+- The OpenAI API key remains on the relay server
+- Sensitive HTTP endpoints require the Remote PIN
+- Raw OBS WebSocket should never be exposed directly to the internet
 
 ## Tech
 
 - Node.js 20+
 - Express
 - `obs-websocket-js` / OBS WebSocket 5.x
-- Native WebSocket UI relay
+- Native WebSocket relay
+- OpenAI Responses API for the optional AI assistant
 - Vanilla HTML/CSS/JavaScript
+- MediaRecorder for supported in-browser voice recording
 - PWA service worker
