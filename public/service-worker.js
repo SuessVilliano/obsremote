@@ -1,5 +1,5 @@
-const CACHE='obsremote-v5-rc2';
-const SHELL=['/','/index.html','/styles.css?v=50','/v5-ui.css?v=51','/app.js?v=50','/v5-ui.js?v=51','/manifest.webmanifest','/soundboard-player.html','/music-player.html'];
+const CACHE='obsremote-v5-1-rc1';
+const SHELL=['/','/index.html','/styles.css?v=50','/v5-ui.css?v=51','/audio-editor.css?v=52','/app.js?v=50','/v5-ui.js?v=51','/audio-editor.js?v=52','/manifest.webmanifest','/soundboard-player.html','/music-player.html'];
 self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)))});
 self.addEventListener('activate',event=>event.waitUntil(Promise.all([self.clients.claim(),caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))])));
 self.addEventListener('fetch',event=>{const req=event.request,url=new URL(req.url);if(req.method!=='GET'||url.origin!==location.origin)return;if(url.pathname.startsWith('/api/')||url.pathname.startsWith('/internal/')||url.pathname==='/ws'||url.pathname.includes('-player'))return;event.respondWith((async()=>{try{const fresh=await fetch(req,{cache:'no-store'});if(fresh.ok){const cache=await caches.open(CACHE);cache.put(req,fresh.clone())}return fresh}catch{const cached=await caches.match(req);if(cached)return cached;if(req.mode==='navigate')return caches.match('/index.html');throw new Error('offline')}})())});
