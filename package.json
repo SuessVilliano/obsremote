@@ -9,6 +9,7 @@
     "dev": "node --watch server.js",
     "check:syntax": "node --check server.js && node --check public/app.js && node --check lib/core.js && node --check lib/music.js && node --check lib/obs-manager.js",
     "test": "node --test tests/*.test.js",
+    "test:e2e": "playwright test",
     "qa": "npm run check:syntax && npm test",
     "audit:prod": "npm audit --omit=dev --audit-level=high"
   },
@@ -18,5 +19,8 @@
     "express": "^4.21.1",
     "obs-websocket-js": "^5.0.6",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
   }
 }
