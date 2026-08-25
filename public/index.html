@@ -5,21 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0d11" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>OBS Remote</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-  <link rel="stylesheet" href="/styles.css?v=33" />
-  <style>
-    .status-pill.offline{position:relative;overflow:hidden}.status-pill.offline span{width:12px!important;height:12px!important;background:transparent!important;border:2px solid var(--line);border-top-color:var(--accent);animation:statusSpin .75s linear infinite}.status-pill.offline strong{font-size:0}.status-pill.offline strong::after{content:'Connecting…';font-size:.78rem}.status-pill.online strong{font-size:.78rem}.status-pill.online strong::after{content:''}@keyframes statusSpin{to{transform:rotate(360deg)}}
-  </style>
+  <link rel="stylesheet" href="/styles.css?v=40" />
 </head>
 <body>
-<div id="bootScreen" class="boot-screen" aria-live="polite"><div class="boot-mark">OR</div><div class="boot-spinner"></div><p>Connecting to your studio…</p></div>
+<div id="bootScreen" class="boot-screen"><div class="boot-mark">OR</div><div class="boot-spinner"></div><p>Connecting to your studio…</p></div>
 <main class="app-shell">
   <header class="topbar">
-    <div class="brand"><div class="brand-mark">OR</div><div><p class="eyebrow">OBS REMOTE · V3.2.1</p><h1>Command Center</h1><p class="memory-note">Your show, anywhere.</p></div></div>
-    <div class="header-actions"><button id="themeToggle" class="icon-button" type="button" aria-label="Toggle light mode"><span id="themeIcon">☀</span></button><div id="statusPill" class="status-pill offline"><span></span><strong>Connecting…</strong></div></div>
+    <div class="brand"><button id="navToggle" class="icon-button nav-toggle" aria-label="Toggle menu">☰</button><div class="brand-mark">OR</div><div><p class="eyebrow">OBS REMOTE · V4</p><h1>Command Center</h1><p class="memory-note">Run the whole show from one screen.</p></div></div>
+    <div class="header-actions"><button id="themeToggle" class="icon-button" aria-label="Toggle theme"><span id="themeIcon">☀</span></button><div id="statusPill" class="status-pill offline"><span></span><strong>Connecting…</strong></div></div>
   </header>
 
   <section id="loginCard" class="panel login-card hidden">
@@ -30,7 +26,7 @@
   </section>
 
   <section id="dashboard" class="dashboard hidden">
-    <aside class="side-nav" aria-label="Command center navigation">
+    <aside id="sideNav" class="side-nav" aria-label="Command center navigation">
       <button class="menu-tab active" data-tab="control"><span>◉</span><b>Control</b></button>
       <button class="menu-tab" data-tab="preview"><span>▣</span><b>Viewer</b></button>
       <button class="menu-tab" data-tab="sounds"><span>♪</span><b>Sounds</b></button>
@@ -42,53 +38,51 @@
     <div class="content-column">
       <section class="tab-view active" data-view="control">
         <div class="page-title"><div><p class="eyebrow">LIVE CONTROL</p><h2>Run the show</h2></div><span id="liveSceneLabel" class="scene-chip">No scene</span></div>
-        <section class="hero-grid"><button id="streamButton" class="action-card stream"><span class="action-label">STREAM</span><strong id="streamState">Start Stream</strong><small>Broadcast output</small></button><button id="recordButton" class="action-card record"><span class="action-label">RECORD</span><strong id="recordState">Start Recording</strong><small>Local recording</small></button></section>
 
-        <section class="panel"><div class="section-heading"><div><p class="eyebrow">SHOW MODES</p><h3>One-tap scenes</h3></div></div><div class="macro-grid">
-          <button class="macro-card smart-action" data-preset="starting"><strong>Starting</strong><span>Lobby · mic off</span></button>
-          <button class="macro-card smart-action featured" data-preset="game"><strong>Game</strong><span>Xbox + facecam</span></button>
-          <button class="macro-card smart-action" data-preset="xbox"><strong>Xbox Full</strong><span>Gameplay only</span></button>
-          <button class="macro-card smart-action" data-preset="camera"><strong>Full Cam</strong><span>Camera focus</span></button>
-          <button class="macro-card smart-action" data-preset="chat"><strong>Just Chatting</strong><span>Studio layout</span></button>
-          <button class="macro-card smart-action" data-preset="brb"><strong>BRB</strong><span>Break · mic off</span></button>
-          <button class="macro-card smart-action" data-preset="ending"><strong>Ending</strong><span>Outro · mic off</span></button>
-          <button id="panicButton" class="macro-card danger"><strong>Panic Mute</strong><span>Mute all audio</span></button>
-        </div></section>
+        <section class="dashboard-grid">
+          <div class="dashboard-main">
+            <section class="hero-grid"><button id="streamButton" class="action-card stream"><span class="action-label">STREAM</span><strong id="streamState">Start Stream</strong><small>Broadcast output</small></button><button id="recordButton" class="action-card record"><span class="action-label">RECORD</span><strong id="recordState">Start Recording</strong><small>Local recording</small></button></section>
 
-        <section class="panel compact-panel"><div><p class="eyebrow">SMART SETUP</p><h3>Repair or build scene pack</h3><p class="panel-copy">Keeps existing scenes and fills in missing smart pieces.</p></div><button id="buildScenesButton" class="secondary">Build / Repair</button></section>
+            <section class="panel"><div class="section-heading"><div><p class="eyebrow">SHOW MODES</p><h3>One-tap scenes</h3></div></div><div class="macro-grid">
+              <button class="macro-card smart-action" data-preset="starting"><strong>Starting</strong><span>Lobby · mic off</span></button><button class="macro-card smart-action featured" data-preset="game"><strong>Game</strong><span>Xbox + facecam</span></button><button class="macro-card smart-action" data-preset="xbox"><strong>Xbox Full</strong><span>Gameplay only</span></button><button class="macro-card smart-action" data-preset="camera"><strong>Full Cam</strong><span>Camera focus</span></button><button class="macro-card smart-action" data-preset="chat"><strong>Just Chatting</strong><span>Studio layout</span></button><button class="macro-card smart-action" data-preset="brb"><strong>BRB</strong><span>Break · mic off</span></button><button class="macro-card smart-action" data-preset="ending"><strong>Ending</strong><span>Outro · mic off</span></button><button id="panicButton" class="macro-card danger"><strong>Panic Mute</strong><span>Mute all audio</span></button>
+            </div></section>
 
-        <section class="panel"><div class="section-heading"><div><p class="eyebrow">SCENES</p><h3>All scenes</h3></div><span id="sceneCount" class="counter">0</span></div><div id="sceneGrid" class="button-grid"></div></section>
+            <section class="panel"><div class="section-heading"><div><p class="eyebrow">SCENES</p><h3>All scenes</h3></div><span id="sceneCount" class="counter">0</span></div><div id="sceneGrid" class="button-grid"></div></section>
+          </div>
+
+          <div class="dashboard-side">
+            <section class="panel viewer-panel compact-viewer"><div class="section-heading"><div><p class="eyebrow">PROGRAM</p><h3>Viewer</h3></div><button id="dashboardPreviewRefresh" class="secondary small">Refresh</button></div><div class="viewer-frame"><div id="dashboardPreviewLoader" class="viewer-loader"><div class="spinner"></div><span>Loading program…</span></div><img id="dashboardPreviewImage" alt="Current OBS program output" /><div id="dashboardPreviewEmpty" class="viewer-empty hidden"><strong>Preview unavailable</strong><span id="dashboardPreviewError">Waiting for OBS…</span></div></div><div class="viewer-footer"><div><span class="live-dot"></span><strong id="dashboardPreviewScene">Program</strong></div><span id="dashboardPreviewTime">Auto</span></div></section>
+
+            <section class="panel quick-sounds"><div class="section-heading"><div><p class="eyebrow">QUICK SOUNDS</p><h3>Favorites</h3></div><button id="manageSoundsButton" class="secondary small">Manage</button></div><div id="quickSoundGrid" class="quick-sound-grid"><div class="empty-card">Favorite sounds from the Sounds tab appear here.</div></div></section>
+
+            <section class="panel compact-panel"><div><p class="eyebrow">SMART SETUP</p><h3>Repair scene pack</h3></div><button id="buildScenesButton" class="secondary">Build / Repair</button></section>
+          </div>
+        </section>
+
         <section class="panel"><div class="section-heading"><div><p class="eyebrow">CURRENT SCENE</p><h3>Sources</h3></div><span id="sourceCount" class="counter">0</span></div><div id="sourceGrid" class="button-grid"></div></section>
         <section class="panel"><div class="section-heading"><div><p class="eyebrow">AUDIO</p><h3>Mixer</h3></div><span id="audioCount" class="counter">0</span></div><div id="audioGrid" class="audio-mixer"></div></section>
       </section>
 
-      <section class="tab-view" data-view="preview">
-        <div class="page-title"><div><p class="eyebrow">PROGRAM MONITOR</p><h2>What viewers see</h2></div><button id="previewRefresh" class="secondary small">Refresh</button></div>
-        <section class="panel viewer-panel">
-          <div class="viewer-frame"><div id="previewLoader" class="viewer-loader"><div class="spinner"></div><span>Requesting OBS frame…</span></div><img id="previewImage" alt="Current OBS program output" /><div id="previewEmpty" class="viewer-empty hidden"><strong>Preview unavailable</strong><span id="previewError">Waiting for OBS…</span><button id="previewRetry" class="secondary small">Try again</button></div></div>
-          <div class="viewer-footer"><div><span class="live-dot"></span><strong id="previewScene">Program</strong></div><span id="previewTime">Auto refresh · 3 sec</span></div>
-          <p class="viewer-note">This is a confidence monitor using OBS screenshots, not full-motion video, so it stays fast on phones and tablets.</p>
-        </section>
-      </section>
+      <section class="tab-view" data-view="preview"><div class="page-title"><div><p class="eyebrow">PROGRAM MONITOR</p><h2>What viewers see</h2></div><button id="previewRefresh" class="secondary small">Refresh</button></div><section class="panel viewer-panel"><div class="viewer-frame"><div id="previewLoader" class="viewer-loader"><div class="spinner"></div><span>Requesting OBS frame…</span></div><img id="previewImage" alt="Current OBS program output" /><div id="previewEmpty" class="viewer-empty hidden"><strong>Preview unavailable</strong><span id="previewError">Waiting for OBS…</span><button id="previewRetry" class="secondary small">Try again</button></div></div><div class="viewer-footer"><div><span class="live-dot"></span><strong id="previewScene">Program</strong></div><span id="previewTime">Auto refresh · 3 sec</span></div></section></section>
 
-      <section class="tab-view" data-view="sounds">
-        <div class="page-title"><div><p class="eyebrow">SOUNDBOARD</p><h2>Your sounds</h2></div><span id="soundCount" class="counter">0</span></div>
-        <section class="panel"><div class="sound-builder"><label>Pad name<input id="soundName" maxlength="60" placeholder="Intro, Air horn, Let's go…" /></label><label>Audio file<input id="soundFile" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm" /></label><button id="uploadSound" class="primary">Add sound</button></div><div class="voice-recorder"><label>Voice clip name<input id="voiceName" maxlength="60" placeholder="My voice drop" /></label><button id="recordVoice" class="secondary">Record voice</button><span id="recordingState" class="recording-state">Ready</span></div></section>
-        <section class="panel"><div id="soundGrid" class="sound-grid"><div class="empty-card">Add an MP3/WAV or record a voice clip.</div></div></section>
-      </section>
+      <section class="tab-view" data-view="sounds"><div class="page-title"><div><p class="eyebrow">SOUNDBOARD</p><h2>Your sounds</h2></div><span id="soundCount" class="counter">0</span></div><section class="panel"><div class="sound-builder"><label>Pad name<input id="soundName" maxlength="60" placeholder="Intro, Air horn, Let's go…" /></label><label>Audio file<input id="soundFile" type="file" accept="audio/*,.mp3,.wav,.m4a,.ogg,.webm" /></label><button id="uploadSound" class="primary">Add sound</button></div><div class="voice-recorder"><label>Voice clip name<input id="voiceName" maxlength="60" placeholder="My voice drop" /></label><button id="recordVoice" class="secondary">Record voice</button><span id="recordingState" class="recording-state">Ready</span></div></section><section class="panel"><p class="panel-copy">Tap the star on any sound to pin it to the main dashboard.</p><div id="soundGrid" class="sound-grid"><div class="empty-card">Add an MP3/WAV or record a voice clip.</div></div></section></section>
 
-      <section class="tab-view" data-view="assistant">
-        <div class="page-title"><div><p class="eyebrow">STUDIO AI</p><h2>Ask or command OBS</h2></div><span id="aiBadge" class="badge">CHECKING</span></div>
-        <section class="panel ai-panel"><div id="aiChat" class="ai-chat" aria-live="polite"><div class="ai-message assistant"><div class="avatar">AI</div><div class="bubble">Tell me what you want the studio to do. Example: “Switch to Game, make sure my mic is live, then play my intro.”</div></div></div><form id="aiForm" class="ai-compose"><div class="compose-box"><textarea id="aiInput" rows="4" placeholder="Ask a question or tell OBS what to do…"></textarea><div class="compose-footer"><span>Enter to send · Shift+Enter for a new line</span><button id="aiSend" class="primary" type="submit">Send</button></div></div></form></section>
-      </section>
+      <section class="tab-view" data-view="assistant"><div class="page-title"><div><p class="eyebrow">STUDIO AI</p><h2>Plan, fix, and run the stream</h2></div><span id="aiBadge" class="badge">CHECKING</span></div><section class="panel ai-panel"><div id="aiChat" class="ai-chat" aria-live="polite"><div class="ai-message assistant"><div class="avatar">AI</div><div class="bubble">Give me your topic, script, content plan, or goal. I can help plan the run-of-show and control supported OBS actions.</div></div></div><form id="aiForm" class="ai-compose"><div class="compose-box"><textarea id="aiInput" rows="4" placeholder="Plan my stream, fix my scene, switch layouts, review my setup…"></textarea><div class="compose-footer"><span>Enter to send · Shift+Enter for new line</span><button id="aiSend" class="primary" type="submit">Send</button></div></div></form></section></section>
 
-      <section class="tab-view" data-view="docs"><div class="page-title"><div><p class="eyebrow">HELP</p><h2>Quick guide</h2></div></div><section class="panel docs-panel"><div class="docs-grid"><article><h3>Control</h3><p>Use Show Modes for fast switches. Game = Xbox + facecam. BRB and Ending mute the main mic automatically.</p></article><article><h3>Viewer</h3><p>Shows snapshots of the current Program output. Use it as a confidence monitor while your main display stays clear.</p></article><article><h3>Sounds</h3><p>Upload MP3/WAV/etc. or record a voice clip. Tap a pad to route it through the OBS soundboard source.</p></article><article><h3>AI</h3><p>The assistant sees current OBS state and can execute approved studio actions. Your API key stays on the Mac.</p></article><article><h3>Green screen</h3><p>Camera above background, Chroma Key on camera, even green-screen lighting, and a little space between you and the screen.</p></article><article><h3>Audio</h3><p>Use the Mini mic as the main stream mic. Set it Mono in Advanced Audio Properties if it only plays in one ear.</p></article><article><h3>Remote access</h3><p>Use obsremote.liv8.co through Cloudflare. Never expose raw OBS WebSocket port 4455 publicly.</p></article><article><h3>Mobile</h3><p>Add the site to your home screen. The bottom navigation and touch controls are designed for phone and tablet use.</p></article></div></section></section>
+      <section class="tab-view" data-view="docs"><div class="page-title"><div><p class="eyebrow">HELP</p><h2>Quick guide</h2></div></div><section class="panel docs-panel"><div class="docs-grid"><article><h3>Main dashboard</h3><p>Your Viewer, stream/record, show modes, favorite sounds, scenes, sources, and mixer all live on Control.</p></article><article><h3>Sounds</h3><p>Upload or record custom audio. Star up to four favorites for quick access on the dashboard.</p></article><article><h3>AI</h3><p>Use AI for stream planning, scripts, run-of-show, troubleshooting, and supported OBS actions. The floating assistant is available from any tab.</p></article><article><h3>Viewer</h3><p>Shows snapshots of OBS Program output. It is a confidence monitor rather than full-motion video.</p></article><article><h3>Green screen</h3><p>Camera above background, Chroma Key on camera, even lighting, and space between you and the screen.</p></article><article><h3>Audio</h3><p>Use the Mini mic as your main stream mic. Set Mono in Advanced Audio Properties if audio only plays in one ear.</p></article></div></section></section>
 
-      <section class="tab-view" data-view="settings"><div class="page-title"><div><p class="eyebrow">SETUP</p><h2>Connection & appearance</h2></div></div><section class="panel toolbar"><label class="target-select">OBS Computer<select id="targetSelect"></select></label><button id="refreshButton" class="secondary">Refresh OBS</button><button id="forgetButton" class="secondary ghost">Forget device</button></section><section class="panel"><div class="info-row"><span>Public app</span><strong id="publicUrl"></strong></div><div class="info-row"><span>OBS WebSocket</span><strong>Private relay</strong></div><div class="info-row"><span>AI model</span><strong id="aiModelLabel">Not configured</strong></div><div class="info-row"><span>Theme</span><button id="themeToggleSettings" class="secondary small">Toggle light / dark</button></div></section></section>
+      <section class="tab-view" data-view="settings"><div class="page-title"><div><p class="eyebrow">SETUP</p><h2>Connection & appearance</h2></div></div><section class="panel toolbar"><label class="target-select">OBS Computer<select id="targetSelect"></select></label><button id="refreshButton" class="secondary">Refresh OBS</button><button id="forgetButton" class="secondary ghost">Forget device</button></section><section class="panel"><div class="info-row"><span>Public app</span><strong id="publicUrl"></strong></div><div class="info-row"><span>AI model</span><strong id="aiModelLabel">Not configured</strong></div><div class="info-row"><span>Theme</span><button id="themeToggleSettings" class="secondary small">Toggle light / dark</button></div></section></section>
     </div>
+  </section>
+
+  <button id="aiFab" class="ai-fab" aria-label="Open AI assistant">✦</button>
+  <section id="aiWidget" class="ai-widget hidden" aria-label="Floating AI assistant">
+    <header id="aiWidgetHeader"><div><strong>Studio AI</strong><small>Plan • fix • control</small></div><div><button id="aiWidgetMinimize" class="widget-icon">−</button><button id="aiWidgetClose" class="widget-icon">×</button></div></header>
+    <div id="aiWidgetChat" class="ai-widget-chat"><div class="widget-message assistant">What are we working on?</div></div>
+    <form id="aiWidgetForm" class="ai-widget-compose"><textarea id="aiWidgetInput" rows="2" placeholder="Ask Studio AI…"></textarea><button class="primary" type="submit">Send</button></form>
   </section>
   <div id="toast" class="toast hidden"></div>
 </main>
-<script type="module" src="/app.js?v=32"></script>
+<script type="module" src="/app.js?v=40"></script>
 </body>
 </html>
