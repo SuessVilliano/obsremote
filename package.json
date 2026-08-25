@@ -1,13 +1,13 @@
 {
   "name": "obsremote-command-center",
-  "version": "5.0.0-rc.1",
+  "version": "5.1.0-rc.1",
   "private": true,
   "description": "Responsive OBS stream operations console with AI, destinations, music, sounds and remote control.",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check:syntax": "node --check server.js && node --check public/app.js && node --check public/v5-ui.js && node --check lib/core.js && node --check lib/music.js && node --check lib/obs-manager.js",
+    "check:syntax": "node --check server.js && node --check public/app.js && node --check public/v5-ui.js && node --check public/audio-editor.js && node --check lib/core.js && node --check lib/music.js && node --check lib/audio-clip.js && node --check lib/obs-manager.js",
     "test": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
     "qa": "npm run check:syntax && npm test",
