@@ -1,0 +1,4 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:transparent;overflow:hidden}</style></head><body><script>
+const params=new URLSearchParams(location.search);const token=params.get('token')||'';const scheme=location.protocol==='https:'?'wss':'ws';let socket;let retry;
+function connect(){clearTimeout(retry);socket=new WebSocket(`${scheme}://${location.host}/sound-player?token=${encodeURIComponent(token)}`);socket.addEventListener('message',async(e)=>{try{const m=JSON.parse(e.data);if(m.type!=='play'||!m.sound?.url)return;const audio=new Audio(m.sound.url);audio.preload='auto';audio.volume=1;await audio.play();}catch{}});socket.addEventListener('close',()=>{retry=setTimeout(connect,1200)});socket.addEventListener('error',()=>{try{socket.close()}catch{}})}connect();
+</script></body></html>
