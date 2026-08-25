@@ -1,19 +1,39 @@
-# OBS Remote Command Center v3
+# OBS Remote Command Center V5
 
-Turn an Amazon Fire tablet, phone, or spare browser into a free Stream Deck-style OBS command center.
+OBS Remote is a responsive stream-operations console for OBS Studio. It is designed to let a creator run the show from a phone, tablet, or browser while OBS remains the production engine.
 
-## V3 highlights
+V5 is a **local/studio release candidate**. It is substantially hardened compared with the early prototype, but it is deliberately not described as a finished public SaaS product yet. See `PRODUCT_READINESS.md` and `STREAMING_DESTINATIONS_MUSIC.md` for the hosted-product architecture and remaining platform-scale work.
 
-- Persistent menu tabs for **Control, Viewer, Sounds, AI, Docs, and Setup**
-- Low-bandwidth **Viewer** screen showing the current OBS Program scene
-- Custom soundboard: upload MP3, WAV, M4A, OGG, or WebM audio
-- Record short voice clips from a supported phone/tablet/browser microphone and save them as sound pads
-- Custom sounds route through an OBS Browser Source so the stream can hear them
-- Built-in AI assistant that can inspect live OBS state and carry out approved OBS actions
-- In-app documentation explaining scenes, green screen, audio, remote access, soundboard, and AI
-- Existing V2 features: smart scenes, scene/source control, audio mixer, backgrounds, reconnect, PWA, multiple OBS targets, and panic mute
+## What V5 includes
+
+- Main command dashboard with Program confidence viewer, Stream/Record, scenes, quick sounds, Now Playing, audio, sources, destination summary, and stream-health data.
+- Desktop/tablet collapsible navigation and mobile off-canvas navigation.
+- Dark/light appearance.
+- Shared persistent OBS connection per configured target instead of one OBS connection per browser client.
+- Connection/reconnect state machine with exponential retry behavior.
+- Scene/source/audio/stream/record control.
+- Smart scene builder and repair flow.
+- Favorite quick sounds plus full sound library.
+- Private sound/media storage and authenticated local previews.
+- Music library, playlists, shuffle/loop, volume, previous/next/play/pause, persistent playback state, and scene-linked playlist rules.
+- Music Browser Source deployment across all OBS scenes so changing scenes does not restart the music engine.
+- Saved RTMP/RTMPS destinations with encrypted stream keys at rest.
+- Destination activation that refuses to rewrite OBS output while a stream is already live.
+- Studio AI workspace plus floating, movable, minimizable assistant.
+- AI context for OBS state, sounds, music/playlists, and configured destinations; stream/record actions require explicit wording.
+- Preflight checks for OBS, current Program scene, camera, microphone, disk space, and music bus.
+- Program health information from OBS where available.
+- PWA cache strategy that deliberately excludes API/private media responses.
+- Automated unit, static UI, server smoke, dependency-audit, security-shape, and desktop/mobile browser tests.
 
 ## Install / update
+
+```bash
+npm install
+npm start
+```
+
+For an existing checkout:
 
 ```bash
 git pull
@@ -21,124 +41,173 @@ npm install
 npm start
 ```
 
-If the server is already running, stop it first with **Control+C**, then pull and restart it.
+If a previous server is running, stop that process before starting a second copy on port 3000.
 
 ## OBS WebSocket
 
-In OBS Studio open **Tools → WebSocket Server Settings**.
+In OBS Studio, open **Tools → WebSocket Server Settings**.
 
-- Enable WebSocket server
-- Port: `4455`
-- If OBS authentication is enabled, put that password in `.env`
-- If OBS shows **[Auth Disabled]**, leave `OBS_WS_PASSWORD=` blank
+- Enable WebSocket server.
+- Default port: `4455`.
+- If OBS authentication is enabled, put its password in the local `.env`.
+- If OBS shows `[Auth Disabled]`, leave `OBS_WS_PASSWORD=` empty.
 
-Example:
+Example local environment:
 
 ```env
 PORT=3000
-REMOTE_PIN=2468
+REMOTE_PIN=choose_a_private_pin
 OBS_NAME=Mac mini OBS
 OBS_WS_URL=ws://127.0.0.1:4455
 OBS_WS_PASSWORD=
-```
 
-## Enable the AI assistant
-
-The AI key stays on the Mac server. It is never sent to the tablet/browser.
-
-Add these lines to your local `.env`:
-
-```env
 OPENAI_API_KEY=your_api_key_here
 AI_MODEL=gpt-5-mini
 ```
 
-Then restart `npm start`.
+Never commit `.env`.
 
-The AI assistant uses the OpenAI Responses API and receives a compact snapshot of the current OBS scenes, sources, audio inputs, and custom sound names/IDs. It can execute only the allow-listed OBS operations implemented by the server. Stream/record actions require an explicit request in the user's message.
+## Storage and secrets
 
-## Viewer screen
+Runtime data lives under `data/`, which is ignored by Git.
 
-Open the **Viewer** tab. The browser requests a compressed screenshot of the current OBS Program scene about every two seconds. This is intended as a confidence monitor, not a zero-latency video monitor.
+V5 moves uploaded sound/music files out of the public static web root and into private runtime media storage. Older `public/uploads/sounds` and `public/uploads/music` files are migrated when possible.
 
-## Custom sounds and voice clips
+V5 also creates persistent local secrets under `data/` for Browser Source playback and destination-secret encryption. Existing RTMP destination records containing a plaintext `streamKey` are migrated to encrypted storage on load.
 
-Open **Sounds**.
+This protects against accidental browser/API disclosure. It does **not** protect secrets from an attacker who already controls the Mac and can read the local secret files. A public desktop agent should move long-term secrets into the operating-system credential store.
 
-1. Give the sound a name.
-2. Upload an audio file, or press **Start recording** to record a voice clip from the current browser device.
-3. The new pad appears in the soundboard.
-4. Tap the large pad to play the sound through OBS.
-5. Use **Preview** to audition it locally on the device, or **Delete** to remove it.
+## Sounds
 
-Runtime sound files are stored under `public/uploads/sounds/` and metadata under `data/`. Both are ignored by Git, so personal recordings are not committed to the public repository.
+Sounds are short one-shot clips such as stingers, drops, effects, and voice clips.
 
-The first time a sound is played in a scene, OBS Remote automatically adds the hidden `OBSRemote • Custom Soundboard` Browser Source. The Smart Scene Builder also adds it to every smart scene in advance.
+- Upload supported audio from **Sounds**.
+- Star sounds to pin favorites to the main dashboard.
+- Preview uses an authenticated endpoint instead of a public upload URL.
+- Playing a sound ensures the OBS soundboard Browser Source exists in the active scene.
 
-## Smart scene pack
+Uploads are size-limited and basic audio file signatures are checked server-side before storage.
 
-Tap **Build / Repair Smart Scenes** to create/repair:
+## Music
 
-- Starting Soon
-- Game + Facecam
-- Xbox Fullscreen
-- Full Camera
-- Just Chatting
-- BRB
-- Ending
+Music is intentionally separate from the soundboard.
 
-The builder attempts to reuse sources named like Logitech/webcam/camera, Xbox/capture card, and Mini Mic/microphone.
+- Upload tracks.
+- Create playlists.
+- Ordered or shuffle playback.
+- Loop or stop at playlist end.
+- Assign a default volume.
+- Link playlists to exact OBS scene names.
+- Install the Music bus in all OBS scenes.
+- Scene changes can automatically select the associated playlist without starting duplicate players.
+
+The authoritative playback state belongs to the local server/OBS Browser Source rather than a phone tab.
+
+Creators are responsible for having the rights to music they broadcast. OBS Remote does not infer or certify licensing status.
+
+## Streaming destinations
+
+V5 can save RTMP/RTMPS destinations and configure OBS to use one selected destination.
+
+Supported saved destination labels include Twitch, Kick, YouTube, TikTok, Instagram, Viloud, and generic custom RTMP. A named platform only works when that account/platform actually provides encoder credentials or a supported integration.
+
+Stream keys are encrypted locally and are never returned by the destination-list API.
+
+**Current local-build limit:** OBS output is switched to one destination at a time. True simultaneous multistream requires the planned relay/cloud layer rather than multiplying OBS/home-upload sessions from the browser app.
+
+## AI assistant
+
+The API key remains server-side. Studio AI receives a compact operational context rather than arbitrary filesystem access.
+
+The allow-listed action layer can work with scenes, smart modes, mute/volume, sounds, music, scene repair, streaming, and recording. Stream/record require an explicit user request.
+
+For the public product, AI permissions should be further separated into safe, confirm, and critical tiers with an audit log and reversible configuration snapshots.
+
+## Viewer
+
+The current Program viewer uses compressed OBS screenshots. It is a confidence monitor, not a zero-latency video return.
+
+The hosted/pro version should add a cached low-FPS mode and ultimately a WebRTC low-latency monitor so multiple viewers do not independently hammer OBS with screenshot requests.
 
 ## Public access
 
-Keep raw OBS WebSocket port `4455` private. Publish only the command-center server through a secure HTTPS tunnel such as Cloudflare Tunnel.
+Never expose raw OBS WebSocket port 4455 to the public internet.
 
-Example architecture:
+For a private installation, publish only the command-center server behind HTTPS/WSS and an identity layer such as Cloudflare Access.
 
 ```text
-Phone / Fire tablet / laptop
-          │
+Phone / Tablet / Browser
+          |
       HTTPS / WSS
-          │
-   Cloudflare Tunnel
-          │
+          |
+ Identity / Tunnel
+          |
    OBS Remote :3000
-          │
+          |
+  Shared local OBS connection
+          |
  ws://127.0.0.1:4455
-          │
-        OBS
+          |
+         OBS
 ```
 
-Use `REMOTE_PIN` and, for a public hostname, put Cloudflare Access or equivalent authentication in front of the app.
+The commercial architecture should replace manual tunnels and a shared PIN with accounts, paired local agents, per-device sessions, roles, and an outbound agent connection to the hosted control plane.
 
 ## Multiple OBS computers
 
 ```env
-OBS_TARGETS_JSON=[{"id":"mac-mini","name":"Mac mini OBS","url":"ws://127.0.0.1:4455","password":""},{"id":"gaming-pc","name":"Gaming PC OBS","url":"ws://192.168.1.50:4455","password":"your-password"}]
+OBS_TARGETS_JSON=[{"id":"mac-mini","name":"Mac mini OBS","url":"ws://127.0.0.1:4455","password":""},{"id":"studio","name":"Studio PC","url":"ws://192.168.1.50:4455","password":"your-password"}]
 ```
 
-Each target must be reachable from the Mac/server running OBS Remote.
+V5 maintains one manager/connection per target and multiplexes browser clients through it.
+
+## Quality assurance
+
+Run the local automated gate:
+
+```bash
+npm run qa
+npm run audit:prod
+```
+
+Browser tests require Playwright Chromium:
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+GitHub Actions runs:
+
+- Node 20, 22, and 24 syntax/unit/static regression tests.
+- Production dependency vulnerability audit.
+- Server startup/health smoke test.
+- PIN-protected API behavior checks.
+- RTMP key non-disclosure/encryption behavior.
+- Invalid audio-upload rejection.
+- Secret/runtime-file Git checks.
+- Desktop Chromium UI flow.
+- Mobile Chromium navigation flow.
+
+See `QA_RELEASE_CHECKLIST.md` for release gates and the final hardware acceptance pass.
 
 ## macOS auto-start
 
-The repo includes `scripts/install-macos-launchagent.sh` to keep OBS Remote running after login. Review it first, then run it from the repo if you want the command center to start automatically.
+`scripts/install-macos-launchagent.sh` can keep the local server running after login. Review the script before installing it.
 
-## Security notes
+## Product documents
 
-- `.env` is ignored by Git
-- User sound uploads and voice recordings are ignored by Git
-- OBS credentials remain on the relay server
-- The OpenAI API key remains on the relay server
-- Sensitive HTTP endpoints require the Remote PIN
-- Raw OBS WebSocket should never be exposed directly to the internet
+- `PRODUCT_READINESS.md` — public-product/security/architecture review.
+- `STREAMING_DESTINATIONS_MUSIC.md` — destination, multistream, playlist, music, and cue architecture.
+- `QA_RELEASE_CHECKLIST.md` — release-quality gates.
 
-## Tech
+## Technology
 
 - Node.js 20+
 - Express
 - `obs-websocket-js` / OBS WebSocket 5.x
-- Native WebSocket relay
-- OpenAI Responses API for the optional AI assistant
-- Vanilla HTML/CSS/JavaScript
-- MediaRecorder for supported in-browser voice recording
-- PWA service worker
+- native WebSocket relay
+- OpenAI Responses API for optional Studio AI
+- vanilla HTML/CSS/JavaScript PWA
+- Playwright for browser regression testing
+- Node built-in test runner for deterministic core tests
