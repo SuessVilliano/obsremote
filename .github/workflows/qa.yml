@@ -28,7 +28,7 @@ jobs:
         run: npm run qa
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
-      - name: Server smoke test
+      - name: Server smoke and security behavior
         shell: bash
         run: |
           PORT=3100 REMOTE_PIN=2468 node server.js > /tmp/obsremote.log 2>&1 &
@@ -41,6 +41,16 @@ jobs:
           cat /tmp/health.json
           node -e "const x=require('/tmp/health.json'); if(!x.ok) process.exit(1)"
           curl --fail --silent http://127.0.0.1:3100/ | grep -q 'OBS REMOTE'
+          code=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3100/api/sounds)
+          test "$code" = "401"
+          curl --fail --silent -H 'x-remote-pin: 2468' http://127.0.0.1:3100/api/sounds | grep -q 'sounds'
+          curl --fail --silent -H 'x-remote-pin: 2468' -H 'content-type: application/json' -d '{"name":"QA RTMP","type":"custom_rtmp","serverUrl":"rtmps://example.com/live","streamKey":"super-secret-key"}' http://127.0.0.1:3100/api/destinations >/tmp/destination.json
+          curl --fail --silent -H 'x-remote-pin: 2468' http://127.0.0.1:3100/api/destinations >/tmp/destinations.json
+          node -e "const x=require('/tmp/destinations.json'); if(!x.destinations[0]?.hasStreamKey || JSON.stringify(x).includes('super-secret-key') || 'streamKey' in x.destinations[0]) process.exit(1)"
+          ! grep -q 'super-secret-key' data/destinations.json
+          bad=$(printf 'not audio' | base64 -w0)
+          code=$(curl --silent --output /tmp/bad-audio.json --write-out '%{http_code}' -H 'x-remote-pin: 2468' -H 'content-type: application/json' -d "{\"name\":\"bad\",\"mime\":\"audio/wav\",\"filename\":\"bad.wav\",\"data\":\"$bad\"}" http://127.0.0.1:3100/api/sounds)
+          test "$code" = "400"
 
   browser-e2e:
     runs-on: ubuntu-latest
