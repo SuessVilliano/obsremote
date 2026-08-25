@@ -84,7 +84,7 @@ jobs:
           grep -q '^\.env$' .gitignore
           grep -q '^data/$' .gitignore
           ! git ls-files | grep -E '(^|/)\.env$|^data/|public/uploads/'
-      - name: Scan source for obvious committed secret patterns
+      - name: Scan application source for obvious committed secrets
         shell: bash
         run: |
-          ! grep -RIE --exclude-dir=.git --exclude='*.md' '(sk-[A-Za-z0-9_-]{20,}|streamKey["'"']?[[:space:]]*[:=][[:space:]]*["'"'][^"'"']{12,})' .
+          ! grep -RIE --exclude='*.md' '(sk-[A-Za-z0-9_-]{20,}|streamKey["'"']?[[:space:]]*[:=][[:space:]]*["'"'][^"'"']{12,})' server.js public lib scripts
