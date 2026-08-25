@@ -1,14 +1,16 @@
 import {test,expect} from '@playwright/test';
 
-test('dashboard shell loads and tabs navigate',async({page})=>{
+async function openTab(page,testInfo,name){if(testInfo.project.name.includes('mobile'))await page.locator('#navToggle').click();await page.locator(`.menu-tab[data-tab="${name}"]`).click()}
+
+test('dashboard shell loads and tabs navigate',async({page},testInfo)=>{
   await page.goto('/');
   await expect(page.getByRole('heading',{name:'Command Center'})).toBeVisible();
   await expect(page.locator('#dashboard')).toBeVisible();
-  await page.locator('.menu-tab[data-tab="music"]').click();
+  await openTab(page,testInfo,'music');
   await expect(page.getByRole('heading',{name:'Library & playlists'})).toBeVisible();
-  await page.locator('.menu-tab[data-tab="destinations"]').click();
+  await openTab(page,testInfo,'destinations');
   await expect(page.getByRole('heading',{name:'Destinations'})).toBeVisible();
-  await page.locator('.menu-tab[data-tab="assistant"]').click();
+  await openTab(page,testInfo,'assistant');
   await expect(page.getByRole('heading',{name:'Producer copilot'})).toBeVisible();
 });
 
