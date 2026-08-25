@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "check:syntax": "node --check server.js && node --check public/app.js && node --check lib/core.js && node --check lib/music.js && node --check lib/obs-manager.js",
+    "check:syntax": "node --check server.js && node --check public/app.js && node --check public/v5-ui.js && node --check lib/core.js && node --check lib/music.js && node --check lib/obs-manager.js",
     "test": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
     "qa": "npm run check:syntax && npm test",
