@@ -1,0 +1,6 @@
+.sound-actions{grid-template-columns:44px 1fr 1fr}.sound-actions .favorite{font-size:1.05rem;color:var(--accent)}
+.preflight-results{white-space:pre-wrap;margin:0;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;font:600 .82rem/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text)}
+.ai-widget.minimized{height:auto;grid-template-rows:auto}.ai-widget.minimized .ai-widget-chat,.ai-widget.minimized form{display:none}.ai-widget.dragging{transition:none;user-select:none}.ai-widget header{touch-action:none}.ai-widget header>div{display:flex;gap:5px;align-items:center}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:760px){button,.primary,.secondary,.mini-button,.menu-tab{min-height:44px}.sound-actions{grid-template-columns:48px 1fr 1fr}.ai-widget header{cursor:default}.side-nav::before{content:'MENU';position:absolute;top:22px;left:18px;color:var(--muted);font-size:.68rem;font-weight:900;letter-spacing:.16em}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
