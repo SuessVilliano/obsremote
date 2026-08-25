@@ -16,3 +16,4 @@ test('private API and media are excluded from service worker cache',()=>{assert.
 test('stream key field is password input',()=>{assert.match(app,/name="streamKey" type="password"/)});
 test('floating AI is draggable and minimizable',()=>{assert.match(ui,/pointerdown/);assert.match(ui,/aiMinimize/);assert.match(css,/\.ai-widget\.minimized/)});
 test('sound actions render three controls cleanly',()=>{assert.match(css,/\.sound-actions\{grid-template-columns:44px 1fr 1fr/)});
+test('rejected remembered PIN is cleared instead of reconnect-looping forever',()=>{assert.match(ui,/recoverBadPin/);assert.match(ui,/incorrect remote pin/);assert.match(ui,/localStorage\.removeItem\('obsremote-pin'\)/)});
