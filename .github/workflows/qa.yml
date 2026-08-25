@@ -1,0 +1,90 @@
+name: QA
+
+on:
+  push:
+    branches: [main, qa/product-hardening-v5]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+          cache-dependency-path: package.json
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Syntax and unit tests
+        run: npm run qa
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+      - name: Server smoke and security behavior
+        shell: bash
+        run: |
+          PORT=3100 REMOTE_PIN=2468 node server.js > /tmp/obsremote.log 2>&1 &
+          pid=$!
+          trap 'kill $pid 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl --fail --silent http://127.0.0.1:3100/api/health >/tmp/health.json; then break; fi
+            sleep 0.5
+          done
+          cat /tmp/health.json
+          node -e "const x=require('/tmp/health.json'); if(!x.ok) process.exit(1)"
+          curl --fail --silent http://127.0.0.1:3100/ | grep -q 'OBS REMOTE'
+          code=$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3100/api/sounds)
+          test "$code" = "401"
+          curl --fail --silent -H 'x-remote-pin: 2468' http://127.0.0.1:3100/api/sounds | grep -q 'sounds'
+          curl --fail --silent -H 'x-remote-pin: 2468' -H 'content-type: application/json' -d '{"name":"QA RTMP","type":"custom_rtmp","serverUrl":"rtmps://example.com/live","streamKey":"qa-key-123"}' http://127.0.0.1:3100/api/destinations >/tmp/destination.json
+          curl --fail --silent -H 'x-remote-pin: 2468' http://127.0.0.1:3100/api/destinations >/tmp/destinations.json
+          node -e "const x=require('/tmp/destinations.json'); if(!x.destinations[0]?.hasStreamKey || JSON.stringify(x).includes('qa-key-123') || 'streamKey' in x.destinations[0]) process.exit(1)"
+          ! grep -q 'qa-key-123' data/destinations.json
+          bad=$(printf 'not audio' | base64 -w0)
+          code=$(curl --silent --output /tmp/bad-audio.json --write-out '%{http_code}' -H 'x-remote-pin: 2468' -H 'content-type: application/json' -d "{\"name\":\"bad\",\"mime\":\"audio/wav\",\"filename\":\"bad.wav\",\"data\":\"$bad\"}" http://127.0.0.1:3100/api/sounds)
+          test "$code" = "400"
+
+  browser-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package.json
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Preserve generated dependency lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-lock
+          path: package-lock.json
+          retention-days: 1
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Desktop and mobile UI smoke tests
+        run: npm run test:e2e
+
+  security-shape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure secrets and runtime media are ignored
+        shell: bash
+        run: |
+          grep -q '^\.env$' .gitignore
+          grep -q '^data/$' .gitignore
+          ! git ls-files | grep -E '(^|/)\.env$|^data/|public/uploads/'
+      - name: Scan application source for obvious committed secrets
+        shell: bash
+        run: |
+          ! grep -RIE --exclude='*.md' '(sk-[A-Za-z0-9_-]{20,}|streamKey["'"']?[[:space:]]*[:=][[:space:]]*["'"'][^"'"']{12,})' server.js public lib scripts
