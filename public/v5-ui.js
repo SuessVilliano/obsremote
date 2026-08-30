@@ -32,10 +32,38 @@ function makeDraggable(){if(!widget||!header)return;let drag=null;header.addEven
 function closeDrawerOnOutside(){document.addEventListener('pointerdown',e=>{if(innerWidth>760||!drawer?.classList.contains('open'))return;if(drawer.contains(e.target)||navToggle?.contains(e.target))return;drawer.classList.remove('open')});document.addEventListener('keydown',e=>{if(e.key==='Escape'){drawer?.classList.remove('open');widget?.classList.add('hidden')}})}
 function recoverBadPin(){const toast=$('#toast');if(!toast)return;let recovering=false;if(sessionStorage.getItem('obsremote-auth-reset')==='1'){sessionStorage.removeItem('obsremote-auth-reset');setTimeout(()=>{toast.textContent='Saved PIN was rejected. Enter the current Remote PIN.';toast.classList.remove('hidden')},120)}new MutationObserver(()=>{if(recovering)return;const text=toast.textContent.toLowerCase();if(!text.includes('incorrect remote pin')&&!text.includes('unauthorized'))return;recovering=true;clearSavedRemotePin();toast.textContent='Saved PIN rejected. Re-enter your Remote PIN.';setTimeout(()=>location.reload(),100)}).observe(toast,{childList:true,characterData:true,subtree:true})}
 function smoothReconnectStatus(){const pill=$('#statusPill');if(!pill)return;const strong=pill.querySelector('strong');if(!strong)return;new MutationObserver(()=>{const text=strong.textContent||'';if(/^Reconnecting in \d+s$/i.test(text))strong.textContent='Reconnecting…'}).observe(strong,{childList:true,characterData:true,subtree:true})}
+function installCalmObsOfflineState(){
+  const pill=$('#statusPill'),strong=pill?.querySelector('strong'),loader=$('#dashPreviewLoader'),loaderText=loader?.querySelector('span'),spinner=loader?.querySelector('.spinner'),health=$('#healthSummary');
+  if(!pill||!strong)return;
+  let probing=false,lastServerProbe=0,serverReachable=true;
+  const setOffline=()=>{
+    if(strong.textContent!=='OBS Offline · Remote Ready')strong.textContent='OBS Offline · Remote Ready';
+    pill.classList.remove('connecting','error','online');pill.classList.add('offline');
+    if(loader){loader.classList.remove('hidden');if(loaderText)loaderText.textContent='OBS is closed. Remote is ready.';if(spinner)spinner.style.display='none'}
+    if(health)health.textContent='OBS is closed — open it when you’re ready';
+  };
+  const setOnlineVisual=()=>{if(spinner)spinner.style.removeProperty('display');if(loaderText&&loaderText.textContent==='OBS is closed. Remote is ready.')loaderText.textContent='Waiting for preview…'};
+  const probeServer=async()=>{
+    if(probing||Date.now()-lastServerProbe<3000)return serverReachable;
+    probing=true;lastServerProbe=Date.now();
+    try{const r=await fetch('/api/config',{cache:'no-store',signal:AbortSignal.timeout(2500)});serverReachable=r.ok}catch{serverReachable=false}
+    probing=false;return serverReachable;
+  };
+  const apply=async()=>{
+    const text=(strong.textContent||'').trim();
+    if(/connected/i.test(text)&&!/^connecting/i.test(text)){setOnlineVisual();return}
+    if(/^OBS:/i.test(text)||/^OBS offline$/i.test(text)||/^OBS connecting$/i.test(text)){setOffline();return}
+    if(/^Reconnecting/i.test(text)||/^Connection interrupted$/i.test(text)){
+      if(await probeServer())setOffline();
+    }
+  };
+  new MutationObserver(()=>{apply()}).observe(strong,{childList:true,characterData:true,subtree:true});
+  apply();
+}
 function registerServiceWorker(){if(!('serviceWorker'in navigator)||!window.isSecureContext&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1')return;window.addEventListener('load',()=>navigator.serviceWorker.register('/service-worker.js',{scope:'/'}).catch(error=>console.warn('Service worker registration failed:',error.message)))}
 function vibrate(ms=16){try{navigator.vibrate?.(ms)}catch{}}
 function tactileSelector(){return '.control-button,.quick-sound,.sound-fire,.action-card,.music-controls button,.audio-main,.primary,.secondary,.mini-button'}
 function addTactileControls(){document.addEventListener('pointerdown',e=>{const b=e.target.closest(tactileSelector());if(!b||b.disabled)return;const r=b.getBoundingClientRect();b.style.setProperty('--press-x',`${e.clientX-r.left}px`);b.style.setProperty('--press-y',`${e.clientY-r.top}px`);b.classList.add('deck-pressed','deck-ripple');vibrate(b.matches('.action-card')?24:14);setTimeout(()=>b.classList.remove('deck-ripple'),90)},{passive:true});const release=e=>{const b=e.target.closest?.(tactileSelector());if(!b)return;setTimeout(()=>b.classList.remove('deck-pressed'),35)};document.addEventListener('pointerup',release,{passive:true});document.addEventListener('pointercancel',release,{passive:true});document.addEventListener('keydown',e=>{if(!['Enter',' '].includes(e.key))return;const b=e.target.closest?.(tactileSelector());if(!b||b.disabled)return;b.classList.add('deck-pressed');vibrate(12)});document.addEventListener('keyup',e=>{if(!['Enter',' '].includes(e.key))return;e.target.closest?.(tactileSelector())?.classList.remove('deck-pressed')})}
 function wireMusicStop(){const b=$('#musicStop');if(!b||b.dataset.wired)return;b.dataset.wired='1';b.addEventListener('click',async()=>{try{const pin=localStorage.getItem('obsremote-pin')||sessionStorage.getItem('obsremote-pin')||'';const r=await fetch('/api/music/control',{method:'POST',headers:{'content-type':'application/json','x-remote-pin':pin},body:JSON.stringify({action:'stop'})});if(!r.ok)throw new Error((await r.json().catch(()=>({}))).error||'Stop failed');b.classList.add('deck-confirmed');setTimeout(()=>b.classList.remove('deck-confirmed'),500)}catch{b.classList.add('deck-error');setTimeout(()=>b.classList.remove('deck-error'),350)}})}
 function markConfirmedButtons(){const obs=new MutationObserver(records=>{for(const rec of records){if(rec.type!=='attributes')continue;const el=rec.target;if(!(el instanceof HTMLElement))continue;if(el.matches('.control-button.current,.action-card.active,.source-on,.audio-strip.live-audio .audio-main')){el.classList.add('deck-confirmed');setTimeout(()=>el.classList.remove('deck-confirmed'),500)}}});obs.observe(document.documentElement,{subtree:true,attributes:true,attributeFilter:['class']})}
-ensureMinimize();setMinimized(localStorage.getItem(MIN_KEY)==='1');restorePosition();makeDraggable();closeDrawerOnOutside();recoverBadPin();smoothReconnectStatus();registerServiceWorker();addTactileControls();wireMusicStop();markConfirmedButtons();window.addEventListener('resize',()=>{if(innerWidth<=760){widget?.style.removeProperty('left');widget?.style.removeProperty('top');widget?.style.removeProperty('right');widget?.style.removeProperty('bottom')}else restorePosition()});
+ensureMinimize();setMinimized(localStorage.getItem(MIN_KEY)==='1');restorePosition();makeDraggable();closeDrawerOnOutside();recoverBadPin();smoothReconnectStatus();installCalmObsOfflineState();registerServiceWorker();addTactileControls();wireMusicStop();markConfirmedButtons();window.addEventListener('resize',()=>{if(innerWidth<=760){widget?.style.removeProperty('left');widget?.style.removeProperty('top');widget?.style.removeProperty('right');widget?.style.removeProperty('bottom')}else restorePosition()});
