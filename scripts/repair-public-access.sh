@@ -29,6 +29,10 @@ find_config() {
   return 1
 }
 
+public_up() {
+  curl -fsS --max-time "${1:-12}" "https://$HOSTNAME/" >/dev/null 2>&1
+}
+
 say "OBS Remote public-access diagnosis"
 echo "App: $ROOT"
 echo "Public host: https://$HOSTNAME"
@@ -88,6 +92,7 @@ cat > "$PLIST" <<EOF
   </array>
   <key>RunAtLoad</key><true/>
   <key>KeepAlive</key><true/>
+  <key>ThrottleInterval</key><integer>5</integer>
   <key>ProcessType</key><string>Background</string>
   <key>StandardOutPath</key><string>$LOG_DIR/cloudflared.log</string>
   <key>StandardErrorPath</key><string>$LOG_DIR/cloudflared-error.log</string>
@@ -97,6 +102,7 @@ EOF
 launchctl bootout "gui/$(id -u)" "$PLIST" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST"
 launchctl enable "gui/$(id -u)/$TUNNEL_LABEL"
+launchctl kickstart -k "gui/$(id -u)/$TUNNEL_LABEL" >/dev/null 2>&1 || true
 sleep 3
 
 if launchctl print "gui/$(id -u)/$TUNNEL_LABEL" >/dev/null 2>&1; then
@@ -106,15 +112,26 @@ else
   exit 5
 fi
 
-say "4. Public hostname test"
-if curl -fsS --max-time 12 "https://$HOSTNAME/" >/dev/null 2>&1; then
+say "4. Verify connector stays online"
+if public_up 12; then
   ok "https://$HOSTNAME is reachable"
 else
-  warn "Tunnel is running, but the public hostname is not reachable yet."
-  echo "Likely causes: Cloudflare DNS/public-hostname mapping, tunnel credentials, or ingress mismatch."
-  echo "Logs: $LOG_DIR/cloudflared-error.log"
-  exit 6
+  warn "Public hostname is still offline; restarting connector once more"
+  launchctl kickstart -k "gui/$(id -u)/$TUNNEL_LABEL" >/dev/null 2>&1 || true
+  sleep 5
+  if public_up 12; then
+    ok "https://$HOSTNAME recovered after connector restart"
+  else
+    fail "Cloudflare connector did not become publicly reachable"
+    echo "--- launchctl status ---"
+    launchctl print "gui/$(id -u)/$TUNNEL_LABEL" 2>/dev/null | head -80 || true
+    echo "--- cloudflared errors ---"
+    tail -80 "$LOG_DIR/cloudflared-error.log" 2>/dev/null || true
+    echo "--- cloudflared output ---"
+    tail -80 "$LOG_DIR/cloudflared.log" 2>/dev/null || true
+    exit 6
+  fi
 fi
 
 say "Repair complete"
-echo "OBS Remote and its Cloudflare tunnel will now restart automatically after login/reboot."
+echo "OBS Remote and its Cloudflare tunnel will now restart automatically after login/reboot, and liv8-start will self-heal the tunnel if it drops."
